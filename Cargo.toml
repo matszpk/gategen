@@ -1,0 +1,10 @@
+[package]
+name = "gategen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gatesim = { version="0.1.0", path="../gatesim" } 
+itoap = "1.0"
+thiserror = "1.0"
+generic-array = "0.14"
