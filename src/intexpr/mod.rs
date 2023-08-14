@@ -121,8 +121,8 @@ use generic_array::*;
 use crate::boolexpr::{half_adder, BoolExprNode};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::dynintexpr::DynIntExprNode;
-use crate::int_utils::*;
 use crate::gate::{Literal, VarLit};
+use crate::int_utils::*;
 use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
 
 /// Integer error.

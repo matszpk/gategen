@@ -30,7 +30,7 @@ use std::rc::Rc;
 
 use crate::gate::{Literal, VarLit};
 
-use gatesim::{Gate, Circuit};
+use gatesim::{Circuit, Gate};
 
 #[cfg(test)]
 macro_rules! test_println {
@@ -109,10 +109,6 @@ impl<T: VarLit + Debug> Node<T> {
     #[inline]
     fn is_xor_or_equal(&self) -> bool {
         matches!(self, Node::Xor(_, _) | Node::Equal(_, _))
-    }
-    
-    pub fn to_circuit(&self) -> Circuit<u32> {
-        Circuit::<u32>::new(0, [], []).unwrap()
     }
 }
 
@@ -232,6 +228,15 @@ where
     new_xxx!(new_xor, Xor);
     new_xxx!(new_equal, Equal);
     new_xxx!(new_impl, Impl);
+
+    pub fn to_circuit(outputs: impl IntoIterator<Item = usize>) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        Circuit::<<T as VarLit>::Unsigned>::new(<T as VarLit>::Unsigned::default(), [], []).unwrap()
+    }
 }
 
 // types

@@ -86,13 +86,13 @@ use generic_array::*;
 
 use crate::boolexpr::{half_adder, BoolEqual, BoolExprNode, BoolImpl};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
+use crate::gate::{Literal, VarLit};
 use crate::int_utils::*;
 pub use crate::intexpr::{
     BitVal, DivMod, FullMul, IntCondAdd, IntCondMul, IntCondNeg, IntCondShl, IntCondShr,
     IntCondSub, IntEqual, IntError, IntExprNode, IntModAdd, IntModAddAssign, IntModMul,
     IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd,
 };
-use crate::gate::{Literal, VarLit};
 use crate::{impl_int_ipty, impl_int_upty};
 
 pub mod arith;

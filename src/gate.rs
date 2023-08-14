@@ -91,6 +91,7 @@ pub enum CNFError {
 pub trait VarLit:
     Neg + PartialEq + Eq + Ord + Copy + TryInto<isize> + TryInto<usize> + TryFrom<usize> + Debug
 {
+    type Unsigned;
     /// Converts variable literal to isize.
     #[inline]
     fn to(self) -> isize
@@ -129,9 +130,11 @@ pub trait VarLit:
 }
 
 macro_rules! impl_varlit {
-    ($Ty:ident) => {
+    ($Ty:ident, $Uty:ident) => {
         /// Implementation for an integer type.
         impl VarLit for $Ty {
+            type Unsigned = $Uty;
+
             #[inline]
             fn is_empty(self) -> bool {
                 self == 0
@@ -162,11 +165,11 @@ macro_rules! impl_varlit {
     };
 }
 
-impl_varlit!(i8);
-impl_varlit!(i16);
-impl_varlit!(i32);
-impl_varlit!(i64);
-impl_varlit!(isize);
+impl_varlit!(i8, u8);
+impl_varlit!(i16, u16);
+impl_varlit!(i32, u32);
+impl_varlit!(i64, u64);
+impl_varlit!(isize, usize);
 
 /// A literal. It holds variable literal or value literal (false or true).
 ///

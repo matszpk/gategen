@@ -27,8 +27,8 @@ use std::rc::Rc;
 
 use crate::boolexpr::{bool_ite, half_adder, opt_full_adder, BoolExprNode};
 use crate::boolexpr_creator::ExprCreator;
-use crate::intexpr::BitVal;
 use crate::gate::VarLit;
+use crate::intexpr::BitVal;
 
 pub(super) fn gen_dadda_mult<T>(
     creator: Rc<RefCell<ExprCreator<T>>>,

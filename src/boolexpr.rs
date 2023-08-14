@@ -178,7 +178,7 @@ where
     //     let empty: [(Quantifier, Vec<T>); 0] = [];
     //     self.creator.borrow().write(self.index, empty, cnf)
     // }
-    // 
+    //
     // /// Writes quantified expression to QCNF.
     // #[inline]
     // pub fn write_quant<W, QL, Q>(&self, quants: QL, cnf: &mut CNFWriter<W>) -> Result<(), CNFError>
