@@ -30,6 +30,8 @@ use std::rc::Rc;
 
 use crate::gate::{Literal, VarLit};
 
+use gatesim::{Gate, Circuit};
+
 #[cfg(test)]
 macro_rules! test_println {
     () => { println!(); };
@@ -107,6 +109,10 @@ impl<T: VarLit + Debug> Node<T> {
     #[inline]
     fn is_xor_or_equal(&self) -> bool {
         matches!(self, Node::Xor(_, _) | Node::Equal(_, _))
+    }
+    
+    pub fn to_circuit(&self) -> Circuit<u32> {
+        Circuit::<u32>::new(0, [], []).unwrap()
     }
 }
 
