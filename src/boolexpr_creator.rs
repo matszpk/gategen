@@ -23,6 +23,7 @@
 //! It defines the ExprCreator - main structure to create and hold boolean expressions.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 use std::ops::Neg;
@@ -133,14 +134,6 @@ impl<T: VarLit + Debug> Default for DepNode<T> {
     }
 }
 
-// Operation join -
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum OpJoin {
-    Nothing,
-    Conj,    // if tree of conjunctions
-    Disjunc, // if tree of disjunctions
-}
-
 /// The ExprCreator holds all expressions which will be written later.
 ///
 /// Main purpose of ExprCreator is maintenance state of expression with its variables
@@ -229,13 +222,88 @@ where
     new_xxx!(new_equal, Equal);
     new_xxx!(new_impl, Impl);
 
-    pub fn to_circuit(outputs: impl IntoIterator<Item = usize>) -> Circuit<<T as VarLit>::Unsigned>
+    pub fn to_circuit(
+        &self,
+        outputs: impl IntoIterator<Item = usize>,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        HashMap<T, <T as VarLit>::Unsigned>,
+    )
     where
+        T: std::hash::Hash,
         <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<<T as VarLit>::Unsigned>,
         <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
     {
-        Circuit::<<T as VarLit>::Unsigned>::new(<T as VarLit>::Unsigned::default(), [], []).unwrap()
+        let mut input_map = HashMap::new();
+        let outputs = Vec::from_iter(outputs);
+        struct SimpleEntry {
+            node_index: usize,
+            path: usize,
+        }
+        impl SimpleEntry {
+            #[inline]
+            fn new_root(start: usize) -> Self {
+                Self {
+                    node_index: start,
+                    path: 0,
+                }
+            }
+        }
+        let mut visited = vec![false; self.nodes.len()];
+        // collect inputs
+        for start in &outputs {
+            let mut stack = vec![SimpleEntry::new_root(*start)];
+            while !stack.is_empty() {
+                let mut top = stack.last_mut().unwrap();
+                let node_index = top.node_index;
+                let node = self.nodes[top.node_index];
+                let first_path = top.path == 0 && !node.is_single();
+                let second_path = top.path == 1 && !node.is_unary();
+                if !first_path || !visited[node_index] {
+                    if !node.is_unary() && first_path {
+                        visited[node_index] = true;
+                    }
+                    match node {
+                        Node::Single(l) => {
+                            if let Some(l) = l.varlit() {
+                                input_map.insert(
+                                    l.positive().unwrap(),
+                                    <T as VarLit>::Unsigned::try_from(input_map.len()).unwrap(),
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
+                    if first_path {
+                        top.path = 1;
+                        stack.push(SimpleEntry {
+                            node_index: node.first_path(),
+                            path: 0,
+                        });
+                    } else if second_path {
+                        top.path = 2;
+                        stack.push(SimpleEntry {
+                            node_index: node.second_path(),
+                            path: 0,
+                        });
+                    } else {
+                        stack.pop();
+                    }
+                } else {
+                    stack.pop();
+                }
+            }
+        }
+        // create circuit
+        for output in &outputs {}
+        (
+            Circuit::<<T as VarLit>::Unsigned>::new(<T as VarLit>::Unsigned::default(), [], [])
+                .unwrap(),
+            input_map,
+        )
     }
 }
 
