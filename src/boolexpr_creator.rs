@@ -429,7 +429,6 @@ where
                                 gates.push(gate);
                             }
                         };
-                        // push gate
                         stack.pop();
                     }
                 } else {
