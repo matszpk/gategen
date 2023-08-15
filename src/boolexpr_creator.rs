@@ -511,5 +511,15 @@ mod tests {
                 HashMap::from_iter([(1, 0)])
             )
         );
+        expr_creator_testcase!(
+            ec,
+            v,
+            2,
+            { [(!v[1].clone() & v[2].clone()).index] },
+            (
+                Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, false)]).unwrap(),
+                HashMap::from_iter([(1, 0), (2, 1)])
+            )
+        );
     }
 }
