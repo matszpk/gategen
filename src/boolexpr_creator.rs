@@ -356,9 +356,10 @@ where
                                 } else {
                                     (Gate::new_and(*gi1, *gi2), false)
                                 };
+                                let gate_idx = gates.len() + input_len;
                                 gate_output_map.insert(
                                     node_index,
-                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                    (Unsigned::<T>::try_from(gate_idx).unwrap(), n),
                                 );
                                 gates.push(gate);
                             }
@@ -376,9 +377,10 @@ where
                                 } else {
                                     (Gate::new_nor(*gi1, *gi2), true)
                                 };
+                                let gate_idx = gates.len() + input_len;
                                 gate_output_map.insert(
                                     node_index,
-                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                    (Unsigned::<T>::try_from(gate_idx).unwrap(), n),
                                 );
                                 gates.push(gate);
                             }
@@ -398,9 +400,10 @@ where
                                 } else {
                                     (Gate::new_xor(*gi1, *gi2), neg)
                                 };
+                                let gate_idx = gates.len() + input_len;
                                 gate_output_map.insert(
                                     node_index,
-                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                    (Unsigned::<T>::try_from(gate_idx).unwrap(), n),
                                 );
                                 gates.push(gate);
                             }
@@ -418,9 +421,10 @@ where
                                 } else {
                                     (Gate::new_nimpl(*gi1, *gi2), true)
                                 };
+                                let gate_idx = gates.len() + input_len;
                                 gate_output_map.insert(
                                     node_index,
-                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                    (Unsigned::<T>::try_from(gate_idx).unwrap(), n),
                                 );
                                 gates.push(gate);
                             }
