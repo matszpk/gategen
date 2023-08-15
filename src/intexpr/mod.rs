@@ -17,97 +17,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module to generate CNF clauses from integer expressions.
-//!
-//! This module contains traits and main structure to operate on integer expressions:
-//! `IntExprNode`. An IntExprNode just holds boolean expression for every bit of integer.
-//! You can use defined type of IntExprNode or just define your integer by supplying
-//! generic parameters.
-//!
-//! Three generic parameters determines type of IntExprNode.
-//! The first T parameter is just variable literal type - it can be omitted.
-//! The second parameter is typed integer (from typenum crate) that determine number of bits
-//! of integer. The last parameter is sign - true if signed integer or false if unsigned integer.
-//! Type of IntExprNode can be written in form: `IntExprNode<i32, U12, false>` -
-//! IntExprNode for 12-bit unsigned integer with 32-bit variable literals.
-//!
-//! ## Operations on expression nodes.
-//!
-//! An IntExprNode provides many operations:
-//!
-//! * equality - returns true if two expressions are equal.
-//! * inequalities - less, less or equal, greater, greater or equal.
-//! * absolute value - `abs()` only for signed IntExprNode.
-//! * bitwise arithmentic - bitwise AND, OR, XOR and NOT by using standard operators.
-//! * modular arithmetic - addition, subtraction, negation, multiplication.
-//! * conditional arithmentic - modular arithmentic that provides condition.
-//! * shifts - left and right shifts.
-//! * conditional shifts - left and right.
-//! * full multiplication - full multiplication that returns full product.
-//! * division and remainder (modulo) - returns quotient, remainder and required condition.
-//!
-//! Many operations are defined through additional traits in this module.
-//! These traits and basic operations are implemented for expression nodes and integers -
-//! it possible to use integer as self or as an argument with expression node like:
-//! `332.mod_mul(x1)`. The method `constant` provide simple way to convert integer
-//! into an expression node (IntExprNode).
-//!
-//! The simple example of usage:
-//! ```
-//! use cnfgen::boolexpr::*;
-//! use cnfgen::intexpr::*;
-//! use cnfgen::writer::{CNFError, CNFWriter};
-//! use std::io;
-//! fn write_diophantine_equation() -> Result<(), CNFError> {
-//!     // define ExprCreator.
-//!     let creator = ExprCreator32::new();
-//!     // define variables - signed 32-bit wide.
-//!     let x = I32ExprNode::variable(creator.clone());
-//!     let y = I32ExprNode::variable(creator.clone());
-//!     let z = I32ExprNode::variable(creator.clone());
-//!     // define equation: x^2 + y^2 - 77*z^2 = 0
-//!     let powx = x.clone().fullmul(x);  // x^2
-//!     let powy = y.clone().fullmul(y);  // y^2
-//!     let powz = z.clone().fullmul(z);  // z^2
-//!     // We use cond_mul to get product and required condition to avoid overflow.
-//!     let (prod, cond0) = powz.cond_mul(77i64);
-//!     // Similary, we use conditional addition and conditional subtraction.
-//!     let (sum1, cond1) = powx.cond_add(powy);
-//!     let (diff2, cond2) = sum1.cond_sub(prod);
-//!     // define final formulae with required conditions.
-//!     let formulae: BoolExprNode<_> = diff2.equal(0) & cond0 & cond1 & cond2;
-//!     // write CNF to stdout.
-//!     formulae.write(&mut CNFWriter::new(io::stdout()))
-//! }
-//! ```
-//!
-//! ## Conditional operations.
-//!
-//! Conditional operations defined by `IntCondXXX` traits is specific type of operations that
-//! provide additional condition as an boolean expression. This condition is satisfiable when
-//! no overflow encountered while evaluating operation. It can supplied at root of final
-//! expression to force evaluate an operation without unexpected overflow like in this
-//! simple example that generates diophantic equation.
-//!
-//! The condition in conditional shifting
-//! just will be satisfied when shift (right argument) value is lower than number of
-//! bits of left argument.
-//!
-//! Division and remainder just returns additional condition that will be satisified if
-//! right argument is not zero.
-//!
-//! ## Conversion between types.
-//!
-//! It is possible conversion between various IntExprNodes that have various sizes and signs.
-//! Conversions are implemented by using standard `From` and `TryFrom` traits.
-//! Conversion from lesser IntExprNode into greater IntExprNode if source are unsigned.
-//!
-//! ## Other operations.
-//!
-//! IntExprNode provides other operations like concatenation of bits, splitting into two
-//! shorter IntExprNodes, casting to signed or unsigned and selection of bits of IntExprNodes.
-
 use std::cell::RefCell;
 use std::cmp;
 use std::fmt::Debug;
@@ -900,7 +809,7 @@ mod tests {
             selects0.push(int_ite(
                 idx.bit(0),
                 values[(i << 1) + 1].clone(),
-                values[(i << 1)].clone(),
+                values[i << 1].clone(),
             ));
         }
         let mut selects1 = vec![];
@@ -908,7 +817,7 @@ mod tests {
             selects1.push(int_ite(
                 idx.bit(1),
                 selects0[(i << 1) + 1].clone(),
-                selects0[(i << 1)].clone(),
+                selects0[i << 1].clone(),
             ));
         }
         let mut selects2 = vec![];
@@ -916,7 +825,7 @@ mod tests {
             selects2.push(int_ite(
                 idx.bit(2),
                 selects1[(i << 1) + 1].clone(),
-                selects1[(i << 1)].clone(),
+                selects1[i << 1].clone(),
             ));
         }
         let mut selects3 = vec![];
@@ -924,7 +833,7 @@ mod tests {
             selects3.push(int_ite(
                 idx.bit(3),
                 selects2[(i << 1) + 1].clone(),
-                selects2[(i << 1)].clone(),
+                selects2[i << 1].clone(),
             ));
         }
         let exp = int_ite(idx.bit(4), selects3[1].clone(), selects3[0].clone());

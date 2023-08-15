@@ -17,66 +17,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module to generate CNF clauses from dynamic integer expressions.
-//!
-//! This module contains traits and main structure to operate on integer expressions:
-//! `DynIntExprNode`. It is similar to IntExprNode, but have some specific features.
-//! Size of integer can be defined dynamically at runtime. This type can be used while
-//! writing generators which generates formulae from source in higher-level language likes
-//! CVC4.
-//!
-//! Two generic parameters determines type of IntExprNode.
-//! The first T parameter is just variable literal type - it can be omitted.
-//! The second parameter is sign - true if signed integer or false if unsigned integer.
-//! Type of DynIntExprNode can be written in form: `DynIntExprNode<i32, false>` -
-//! DynIntExprNode for unsigned integer with 32-bit variable literals.
-//! You can use `IDynExprNode` or `UDynExprNode` to omit second parameter.
-//!
-//! Operations on this expression node are similar to operations that can be done on
-//! IntExprNode, except integer constant that can't be joined with DynIntExprNode.
-//! However, it is possible conversion from integer into DynIntExprNode thanks
-//! `TryIntConstantN` trait that provides method to that conversion.
-//!
-//! The simple example of usage:
-//! ```
-//! use cnfgen::boolexpr::*;
-//! use cnfgen::dynintexpr::*;
-//! use cnfgen::writer::{CNFError, CNFWriter};
-//! use std::io;
-//! fn write_diophantine_equation() -> Result<(), CNFError> {
-//!     // define ExprCreator.
-//!     let creator = ExprCreator32::new();
-//!     // define variables - signed 200-bit wide.
-//!     let x = IDynExprNode::variable(creator.clone(), 200);
-//!     let y = IDynExprNode::variable(creator.clone(), 200);
-//!     let z = IDynExprNode::variable(creator.clone(), 200);
-//!     // define equation: x^2 + y^2 - 77*z^2 = 0
-//!     let powx = x.clone().fullmul(x);  // x^2
-//!     let powy = y.clone().fullmul(y);  // y^2
-//!     let powz = z.clone().fullmul(z);  // z^2
-//!     let v77 = IDynExprNode::try_constant_n(creator.clone(), 400, 77).unwrap();
-//!     // We use cond_mul to get product and required condition to avoid overflow.
-//!     let (prod, cond0) = powz.cond_mul(v77);
-//!     // Similary, we use conditional addition and conditional subtraction.
-//!     let (sum1, cond1) = powx.cond_add(powy);
-//!     let (diff2, cond2) = sum1.cond_sub(prod);
-//!     // define final formulae with required conditions.
-//!     let zero = IDynExprNode::try_constant_n(creator.clone(), 400, 0).unwrap();
-//!     let formulae: BoolExprNode<_> = diff2.equal(zero) & cond0 & cond1 & cond2;
-//!     // write CNF to stdout.
-//!     formulae.write(&mut CNFWriter::new(io::stdout()))
-//! }
-//! ```
-//!
-//! Look up module `intexpr` to figure out about possible operations.
-//!
-//! ## Conversion between types.
-//!
-//! It is possible conversion between various DynIntExprNodes that have various sizes and signs.
-//! Conversions are implemented by using `TryFromNSized` traits which define
-//! a method 'try_from_n` where argument `n` defines bits of destination.
-
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::ops::Neg;

@@ -17,33 +17,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module to generate CNF clauses from boolean expressions.
-//!
-//! This module contains traits and main structure to operate on boolean expressions:
-//! `BoolExprNode`. The same `BoolExprNode` can be used in following way:
-//!
-//! ```
-//! use cnfgen::boolexpr::*;
-//! use cnfgen::writer::{CNFError, CNFWriter};
-//! use std::io;
-//! fn simple_expr_generator() -> Result<(), CNFError> {
-//!     // define ExprCreator.
-//!     let creator = ExprCreator32::new();
-//!     // define variables.
-//!     let x1 = BoolExprNode::variable(creator.clone());
-//!     let x2 = BoolExprNode::variable(creator.clone());
-//!     let x3 = BoolExprNode::variable(creator.clone());
-//!     let x4 = BoolExprNode::variable(creator.clone());
-//!     // define final expression: x1 => ((x2 xor x3) == (x3 and x4)).
-//!     let expr = x1.clone().imp((x2 ^ x3.clone()).bequal(x3 & x4));
-//!     // write CNF to stdout.
-//!     expr.write(&mut CNFWriter::new(io::stdout()))
-//! }
-//! ```
-//! Same BoolExprNode can be used to build boolean expressions by using operators.
-//! Additional traits provides two extra operators: a material implication and a bolean equality.
-
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::io::Write;
@@ -1479,34 +1452,6 @@ mod tests {
             assert_eq!(7, c.index);
             assert_eq!(exp_ec, *ec.borrow());
         }
-    }
-
-    #[test]
-    fn test_expr_node_write() {
-        let ec = ExprCreator::<isize>::new();
-        let mut v = vec![];
-        v.push(BoolExprNode::single(ec.clone(), false));
-        for _ in 0..2 {
-            v.push(BoolExprNode::variable(ec.clone()));
-        }
-        let xp = v[1].clone() & v[2].clone();
-        let mut cnf_writer = CNFWriter::new(vec![]);
-        xp.write(&mut cnf_writer).unwrap();
-        assert_eq!(
-            "p cnf 2 2\n1 0\n2 0\n",
-            String::from_utf8_lossy(cnf_writer.inner())
-        );
-
-        let mut cnf_writer = CNFWriter::new(vec![]);
-        xp.write_quant(
-            [(Quantifier::Exists, [1]), (Quantifier::ForAll, [2])],
-            &mut cnf_writer,
-        )
-        .unwrap();
-        assert_eq!(
-            "p cnf 2 2\ne 1 0\na 2 0\n1 0\n2 0\n",
-            String::from_utf8_lossy(cnf_writer.inner())
-        );
     }
 }
 
