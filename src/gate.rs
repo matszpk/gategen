@@ -90,6 +90,8 @@ pub enum CNFError {
 /// It can be a signed integer type: from `i8` to `i64` or `isize`.
 pub trait VarLit:
     Neg + PartialEq + Eq + Ord + Copy + TryInto<isize> + TryInto<usize> + TryFrom<usize> + Debug
+where
+    <Self as VarLit>::Unsigned: Clone + Copy,
 {
     type Unsigned;
     /// Converts variable literal to isize.

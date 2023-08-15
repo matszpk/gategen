@@ -237,8 +237,10 @@ where
         usize: TryFrom<<T as VarLit>::Unsigned>,
         <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
     {
+        type Unsigned<T> = <T as VarLit>::Unsigned;
         let mut input_map = HashMap::new();
         let outputs = Vec::from_iter(outputs);
+        #[derive(Clone, Copy)]
         struct SimpleEntry {
             node_index: usize,
             path: usize,
@@ -260,7 +262,7 @@ where
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
                 let node = self.nodes[top.node_index];
-                let first_path = top.path == 0 && !node.is_single();
+                let first_path = top.path == 0;
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
                     if !node.is_unary() && first_path {
@@ -271,8 +273,10 @@ where
                             if let Some(l) = l.varlit() {
                                 input_map.insert(
                                     l.positive().unwrap(),
-                                    <T as VarLit>::Unsigned::try_from(input_map.len()).unwrap(),
+                                    Unsigned::<T>::try_from(input_map.len()).unwrap(),
                                 );
+                            } else {
+                                panic!("Unsupported!");
                             }
                         }
                         _ => {}
@@ -297,8 +301,86 @@ where
                 }
             }
         }
+        
+        #[derive(Clone, Copy)]
+        enum GateElem<T: VarLit> {
+            Empty,
+            Input((Unsigned<T>, bool)),
+            Gate((Gate<Option<Unsigned<T>>>, bool)),
+        }
+        #[derive(Clone, Copy)]
+        struct GateEntry<T: VarLit> {
+            node_index: usize,
+            path: usize,
+            gate_elem: GateElem<T>,
+        }
+        impl<T: VarLit> GateEntry<T> {
+            #[inline]
+            fn new_root(start: usize) -> Self {
+                Self {
+                    node_index: start,
+                    path: 0,
+                    gate_elem: GateElem::Empty,
+                }
+            }
+        }
         // create circuit
-        for output in &outputs {}
+        let gate_outputs_map = HashMap::<usize, Unsigned<T>>::new();
+        let input_len = input_map.len();
+        //let outputs: Vec<(T::Unsigned = vec![];
+        for start in &outputs {
+            let mut stack = vec![GateEntry::<T>::new_root(*start)];
+            while !stack.is_empty() {
+                let mut top = stack.last_mut().unwrap();
+                let node_index = top.node_index;
+                let node = self.nodes[top.node_index];
+                let first_path = top.path == 0;
+                let second_path = top.path == 1 && !node.is_unary();
+                if !first_path || !visited[node_index] {
+                    if !node.is_unary() && first_path {
+                        visited[node_index] = true;
+                    }
+                    if first_path {
+                        top.path = 1;
+                        stack.push(GateEntry {
+                            node_index: node.first_path(),
+                            path: 0,
+                            gate_elem: GateElem::Empty,
+                        });
+                    } else if second_path {
+                        top.path = 2;
+                        stack.push(GateEntry {
+                            node_index: node.second_path(),
+                            path: 0,
+                            gate_elem: GateElem::Empty,
+                        });
+                    } else {
+                        // push gate
+                        let gate_elem = top.gate_elem;
+                        stack.pop();
+                        let mut top = stack.last_mut().unwrap();
+                        let gate_elem = match node {
+                            Node::Single(l) => {
+                            },
+                            Node::Negated(fidx) => {
+                            },
+                            Node::And(fidx, sidx) => {
+                            },
+                            Node::Or(fidx, sidx) => {
+                            },
+                            Node::Xor(fidx, sidx) => {
+                            },
+                            Node::Equal(fidx, sidx) => {
+                            },
+                            Node::Impl(fidx, sidx) => {
+                            },
+                        };
+                    }
+                } else {
+                    stack.pop();
+                }
+            }
+        }
         (
             Circuit::<<T as VarLit>::Unsigned>::new(<T as VarLit>::Unsigned::default(), [], [])
                 .unwrap(),
