@@ -501,9 +501,10 @@ mod tests {
                 HashMap::from_iter([(1, 0)])
             )
         );
-        for (func_name, aneg, bneg, expected) in [
+        for (func_name, aneg, bneg, rneg, expected) in [
             (
                 "and",
+                false,
                 false,
                 false,
                 (
@@ -515,6 +516,7 @@ mod tests {
                 "and",
                 true,
                 false,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -524,6 +526,7 @@ mod tests {
                 "and",
                 false,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -533,6 +536,7 @@ mod tests {
                 "and",
                 true,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nor(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -542,6 +546,7 @@ mod tests {
                 "or",
                 false,
                 false,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nor(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -550,6 +555,7 @@ mod tests {
             (
                 "or",
                 true,
+                false,
                 false,
                 (
                     Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, true)]).unwrap(),
@@ -560,6 +566,7 @@ mod tests {
                 "or",
                 false,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -569,6 +576,7 @@ mod tests {
                 "or",
                 true,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_and(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -578,6 +586,7 @@ mod tests {
                 "xor",
                 false,
                 false,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -586,6 +595,7 @@ mod tests {
             (
                 "xor",
                 true,
+                false,
                 false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
@@ -596,6 +606,7 @@ mod tests {
                 "xor",
                 false,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -605,6 +616,7 @@ mod tests {
                 "xor",
                 true,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -612,6 +624,7 @@ mod tests {
             ),
             (
                 "eq",
+                false,
                 false,
                 false,
                 (
@@ -623,6 +636,7 @@ mod tests {
                 "eq",
                 true,
                 false,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -632,6 +646,7 @@ mod tests {
                 "eq",
                 false,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -641,6 +656,7 @@ mod tests {
                 "eq",
                 true,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -648,6 +664,7 @@ mod tests {
             ),
             (
                 "impl",
+                false,
                 false,
                 false,
                 (
@@ -659,6 +676,7 @@ mod tests {
                 "impl",
                 true,
                 false,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nor(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -668,6 +686,7 @@ mod tests {
                 "impl",
                 false,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_and(0, 1)], [(2, true)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
@@ -677,8 +696,29 @@ mod tests {
                 "impl",
                 true,
                 true,
+                false,
                 (
                     Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "and",
+                false,
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_and(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "or",
+                true,
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, false)]).unwrap(),
                     HashMap::from_iter([(1, 0), (2, 1)]),
                 ),
             ),
@@ -690,15 +730,20 @@ mod tests {
                 {
                     let a = if aneg { !v[1].clone() } else { v[1].clone() };
                     let b = if bneg { !v[2].clone() } else { v[2].clone() };
-                    match func_name {
-                        "and" => [(a.clone() & b.clone()).index],
-                        "or" => [(a.clone() | b.clone()).index],
-                        "xor" => [(a.clone() ^ b.clone()).index],
-                        "impl" => [(a.clone().imp(b.clone())).index],
-                        "eq" => [(a.clone().bequal(b.clone())).index],
+                    let r = match func_name {
+                        "and" => a.clone() & b.clone(),
+                        "or" => a.clone() | b.clone(),
+                        "xor" => a.clone() ^ b.clone(),
+                        "impl" => a.clone().imp(b.clone()),
+                        "eq" => a.clone().bequal(b.clone()),
                         _ => {
                             panic!("Unsupported");
                         }
+                    };
+                    if rneg {
+                        [(!r).index]
+                    } else {
+                        [r.index]
                     }
                 },
                 expected
