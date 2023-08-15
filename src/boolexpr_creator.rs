@@ -306,6 +306,7 @@ where
         let mut gate_output_map = HashMap::<usize, (Unsigned<T>, bool)>::new();
         let input_len = input_map.len();
         let mut gates = vec![];
+        let mut circ_outputs = vec![];
         for start in &outputs {
             let mut stack = vec![SimpleEntry::new_root(*start)];
             while !stack.is_empty() {
@@ -430,15 +431,25 @@ where
                             }
                         };
                         stack.pop();
+                        if stack.is_empty() {
+                            circ_outputs.push(gate_output_map[&node_index]);
+                        }
                     }
                 } else {
                     stack.pop();
+                    if stack.is_empty() {
+                        circ_outputs.push(gate_output_map[&node_index]);
+                    }
                 }
             }
         }
         (
-            Circuit::<<T as VarLit>::Unsigned>::new(<T as VarLit>::Unsigned::default(), [], [])
-                .unwrap(),
+            Circuit::<<T as VarLit>::Unsigned>::new(
+                Unsigned::<T>::try_from(input_len).unwrap(),
+                gates,
+                circ_outputs,
+            )
+            .unwrap(),
             input_map,
         )
     }
