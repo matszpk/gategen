@@ -17,11 +17,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module to generate CNF clauses from boolean expressions.
-//!
-//! It defines the ExprCreator - main structure to create and hold boolean expressions.
-
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -110,27 +105,6 @@ impl<T: VarLit + Debug> Node<T> {
     #[inline]
     fn is_xor_or_equal(&self) -> bool {
         matches!(self, Node::Xor(_, _) | Node::Equal(_, _))
-    }
-}
-
-// internals
-#[derive(Copy, Clone, Debug)]
-struct DepNode<T: VarLit + Debug> {
-    normal_usage: bool,
-    negated_usage: bool,
-    linkvar: Option<T>,
-    parent_count: usize,
-}
-
-impl<T: VarLit + Debug> Default for DepNode<T> {
-    #[inline]
-    fn default() -> Self {
-        DepNode {
-            normal_usage: false,
-            negated_usage: false,
-            linkvar: None,
-            parent_count: 0,
-        }
     }
 }
 
