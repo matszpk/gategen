@@ -125,6 +125,8 @@ where
     fn first_value() -> Self;
     /// Returns some positive value (absolute value) if no overflow encountered.
     fn positive(self) -> Option<Self>;
+    /// Returns some positive value (absolute value) if no overflow encountered.
+    fn is_positive(self) -> bool;
     /// Returns next value.
     fn next_value(self) -> Option<Self>;
     /// Write self value to vector of bytes.
@@ -152,6 +154,11 @@ macro_rules! impl_varlit {
             #[inline]
             fn positive(self) -> Option<Self> {
                 self.checked_abs()
+            }
+
+            #[inline]
+            fn is_positive(self) -> bool {
+                self > 0
             }
 
             #[inline]
