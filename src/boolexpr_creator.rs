@@ -302,34 +302,12 @@ where
             }
         }
 
-        #[derive(Clone, Copy)]
-        enum GateElem<T: VarLit> {
-            Empty,
-            GateInput((Option<Unsigned<T>>, bool)),
-            Gate((Gate<Option<Unsigned<T>>>, bool)),
-        }
-        #[derive(Clone, Copy)]
-        struct GateEntry<T: VarLit> {
-            node_index: usize,
-            path: usize,
-            gate_elem: GateElem<T>,
-        }
-        impl<T: VarLit> GateEntry<T> {
-            #[inline]
-            fn new_root(start: usize) -> Self {
-                Self {
-                    node_index: start,
-                    path: 0,
-                    gate_elem: GateElem::Empty,
-                }
-            }
-        }
         // create circuit
         let mut gate_output_map = HashMap::<usize, (Unsigned<T>, bool)>::new();
         let input_len = input_map.len();
-        //let outputs: Vec<(T::Unsigned = vec![];
+        let mut gates = vec![];
         for start in &outputs {
-            let mut stack = vec![GateEntry::<T>::new_root(*start)];
+            let mut stack = vec![SimpleEntry::new_root(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
@@ -342,128 +320,113 @@ where
                     }
                     if first_path {
                         top.path = 1;
-                        stack.push(GateEntry {
+                        stack.push(SimpleEntry {
                             node_index: node.first_path(),
                             path: 0,
-                            gate_elem: GateElem::Empty,
                         });
                     } else if second_path {
                         top.path = 2;
-                        stack.push(GateEntry {
+                        stack.push(SimpleEntry {
                             node_index: node.second_path(),
                             path: 0,
-                            gate_elem: GateElem::Empty,
                         });
                     } else {
-                        top.gate_elem = match node {
+                        match node {
                             Node::Single(l) => {
                                 let l = l.varlit().unwrap();
                                 let lit = input_map[&l.positive().unwrap()];
                                 gate_output_map.insert(node_index, (lit, !l.is_positive()));
-                                GateElem::GateInput((Some(lit), !l.is_positive()))
                             }
                             Node::Negated(fidx) => {
                                 let (gi, n) = gate_output_map.get(&fidx).unwrap();
-                                GateElem::<T>::GateInput((Some(*gi), !n))
+                                gate_output_map.insert(node_index, (*gi, !n));
                             }
                             Node::And(fidx, sidx) => {
                                 let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
                                 let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
-                                if *n1 {
+                                let (gate, n) = if *n1 {
                                     if *n2 {
                                         // and(!gi1,!gi2) -> nor(gi1,gi2)
-                                        GateElem::Gate((
-                                            Gate::new_nor(Some(*gi1), Some(*gi2)),
-                                            false,
-                                        ))
+                                        (Gate::new_nor(*gi1, *gi2), false)
                                     } else {
-                                        GateElem::Gate((
-                                            Gate::new_nimpl(Some(*gi2), Some(*gi1)),
-                                            false,
-                                        ))
+                                        (Gate::new_nimpl(*gi2, *gi1), false)
                                     }
                                 } else if *n2 {
-                                    GateElem::Gate((Gate::new_nimpl(Some(*gi1), Some(*gi2)), false))
+                                    (Gate::new_nimpl(*gi1, *gi2), false)
                                 } else {
-                                    GateElem::Gate((Gate::new_and(Some(*gi1), Some(*gi2)), false))
-                                }
+                                    (Gate::new_and(*gi1, *gi2), false)
+                                };
+                                gate_output_map.insert(
+                                    node_index,
+                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                );
+                                gates.push(gate);
                             }
                             Node::Or(fidx, sidx) => {
                                 let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
                                 let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
-                                if *n1 {
+                                let (gate, n) = if *n1 {
                                     if *n2 {
-                                        GateElem::Gate((
-                                            Gate::new_and(Some(*gi1), Some(*gi2)),
-                                            true,
-                                        ))
+                                        (Gate::new_and(*gi1, *gi2), true)
                                     } else {
-                                        GateElem::Gate((
-                                            Gate::new_nimpl(Some(*gi1), Some(*gi2)),
-                                            true,
-                                        ))
+                                        (Gate::new_nimpl(*gi1, *gi2), true)
                                     }
                                 } else if *n2 {
-                                    GateElem::Gate((Gate::new_nimpl(Some(*gi2), Some(*gi1)), true))
+                                    (Gate::new_nimpl(*gi2, *gi1), true)
                                 } else {
-                                    GateElem::Gate((Gate::new_nor(Some(*gi1), Some(*gi2)), true))
-                                }
+                                    (Gate::new_nor(*gi1, *gi2), true)
+                                };
+                                gate_output_map.insert(
+                                    node_index,
+                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                );
+                                gates.push(gate);
                             }
                             Node::Xor(fidx, sidx) | Node::Equal(fidx, sidx) => {
                                 let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
                                 let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
                                 let neg = matches!(node, Node::Xor(_, _));
-                                if *n1 {
+                                let (gate, n) = if *n1 {
                                     if *n2 {
                                         // and(!gi1,!gi2) -> nor(gi1,gi2)
-                                        GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), neg))
+                                        (Gate::new_xor(*gi1, *gi2), neg)
                                     } else {
-                                        GateElem::Gate((
-                                            Gate::new_xor(Some(*gi1), Some(*gi2)),
-                                            !neg,
-                                        ))
+                                        (Gate::new_xor(*gi1, *gi2), !neg)
                                     }
                                 } else if *n2 {
-                                    GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), !neg))
+                                    (Gate::new_xor(*gi1, *gi2), !neg)
                                 } else {
-                                    GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), neg))
-                                }
+                                    (Gate::new_xor(*gi1, *gi2), neg)
+                                };
+                                gate_output_map.insert(
+                                    node_index,
+                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                );
+                                gates.push(gate);
                             }
                             Node::Impl(fidx, sidx) => {
                                 let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
                                 let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
-                                if *n1 {
+                                let (gate, n) = if *n1 {
                                     if *n2 {
-                                        GateElem::Gate((
-                                            Gate::new_nimpl(Some(*gi2), Some(*gi1)),
-                                            true,
-                                        ))
+                                        (Gate::new_nimpl(*gi2, *gi1), true)
                                     } else {
-                                        GateElem::Gate((
-                                            Gate::new_nor(Some(*gi1), Some(*gi2)),
-                                            true,
-                                        ))
+                                        (Gate::new_nor(*gi1, *gi2), true)
                                     }
                                 } else if *n2 {
-                                    GateElem::Gate((Gate::new_and(Some(*gi1), Some(*gi2)), true))
+                                    (Gate::new_and(*gi1, *gi2), true)
                                 } else {
-                                    GateElem::Gate((Gate::new_nimpl(Some(*gi1), Some(*gi2)), true))
-                                }
+                                    (Gate::new_nimpl(*gi1, *gi2), true)
+                                };
+                                gate_output_map.insert(
+                                    node_index,
+                                    (Unsigned::<T>::try_from(gates.len() + input_len).unwrap(), n),
+                                );
+                                gates.push(gate);
                             }
                         };
                         // push gate
-                        let gate_elem = top.gate_elem;
                         stack.pop();
-                        let mut top = stack.last_mut().unwrap();
-                        match node {
-                            Node::Single(l) => {}
-                            Node::Negated(fidx) => {}
-                            Node::And(fidx, sidx) => {}
-                            Node::Or(fidx, sidx) => {}
-                            Node::Xor(fidx, sidx) => {}
-                            Node::Equal(fidx, sidx) => {}
-                            Node::Impl(fidx, sidx) => {}
-                        }
                     }
                 } else {
                     stack.pop();
