@@ -450,8 +450,8 @@ where
                                     GateElem::Gate((Gate::new_nor(None, None), true))
                                 }
                             }
-                            Node::Xor(fidx, sidx)|Node::Equal(fidx, sidx) => {
-                                let neg = matches!(node, Node::Xor(_,_));
+                            Node::Xor(fidx, sidx) | Node::Equal(fidx, sidx) => {
+                                let neg = matches!(node, Node::Xor(_, _));
                                 if let Some((gi1, n1)) = gate_output_map.get(&fidx) {
                                     if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
                                         if *n1 {
@@ -526,12 +526,12 @@ where
                                         }
                                     } else {
                                         if *n1 {
+                                            GateElem::Gate((Gate::new_nor(Some(*gi1), None), true))
+                                        } else {
                                             GateElem::Gate((
-                                                Gate::new_nor(Some(*gi1), None),
+                                                Gate::new_nimpl(None, Some(*gi1)),
                                                 true,
                                             ))
-                                        } else {
-                                            GateElem::Gate((Gate::new_nimpl(None, Some(*gi1)), true))
                                         }
                                     }
                                 } else if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
