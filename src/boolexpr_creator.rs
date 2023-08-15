@@ -349,7 +349,7 @@ where
                         Node::Xor(fidx, sidx) | Node::Equal(fidx, sidx) => {
                             let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
                             let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
-                            let neg = matches!(node, Node::Xor(_, _));
+                            let neg = matches!(node, Node::Equal(_, _));
                             let (gate, n) = if *n1 {
                                 if *n2 {
                                     // and(!gi1,!gi2) -> nor(gi1,gi2)
@@ -494,16 +494,6 @@ mod tests {
         expr_creator_testcase!(
             ec,
             v,
-            2,
-            { [(v[1].clone() & v[2].clone()).index] },
-            (
-                Circuit::new(2, [Gate::new_and(0, 1)], [(2, false)]).unwrap(),
-                HashMap::from_iter([(1, 0), (2, 1)])
-            )
-        );
-        expr_creator_testcase!(
-            ec,
-            v,
             1,
             { [(v[1].clone() & v[1].clone()).index] },
             (
@@ -511,15 +501,208 @@ mod tests {
                 HashMap::from_iter([(1, 0)])
             )
         );
-        expr_creator_testcase!(
-            ec,
-            v,
-            2,
-            { [(!v[1].clone() & v[2].clone()).index] },
+        for (func_name, aneg, bneg, expected) in [
             (
-                Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, false)]).unwrap(),
-                HashMap::from_iter([(1, 0), (2, 1)])
-            )
-        );
+                "and",
+                false,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_and(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "and",
+                true,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "and",
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "and",
+                true,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_nor(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "or",
+                false,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_nor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "or",
+                true,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "or",
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "or",
+                true,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_and(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "xor",
+                false,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "xor",
+                true,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "xor",
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "xor",
+                true,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "eq",
+                false,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "eq",
+                true,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "eq",
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, false)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "eq",
+                true,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_xor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "impl",
+                false,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "impl",
+                true,
+                false,
+                (
+                    Circuit::new(2, [Gate::new_nor(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "impl",
+                false,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_and(0, 1)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+            (
+                "impl",
+                true,
+                true,
+                (
+                    Circuit::new(2, [Gate::new_nimpl(1, 0)], [(2, true)]).unwrap(),
+                    HashMap::from_iter([(1, 0), (2, 1)]),
+                ),
+            ),
+        ] {
+            expr_creator_testcase!(
+                ec,
+                v,
+                2,
+                {
+                    let a = if aneg { !v[1].clone() } else { v[1].clone() };
+                    let b = if bneg { !v[2].clone() } else { v[2].clone() };
+                    match func_name {
+                        "and" => [(a.clone() & b.clone()).index],
+                        "or" => [(a.clone() | b.clone()).index],
+                        "xor" => [(a.clone() ^ b.clone()).index],
+                        "impl" => [(a.clone().imp(b.clone())).index],
+                        "eq" => [(a.clone().bequal(b.clone())).index],
+                        _ => {
+                            panic!("Unsupported");
+                        }
+                    }
+                },
+                expected
+            );
+        }
     }
 }
