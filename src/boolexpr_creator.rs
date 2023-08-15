@@ -341,211 +341,6 @@ where
                         visited[node_index] = true;
                     }
                     if first_path {
-                        top.gate_elem = match node {
-                            Node::Single(l) => {
-                                let l = l.varlit().unwrap();
-                                let lit = input_map[&l.positive().unwrap()];
-                                gate_output_map.insert(node_index, (lit, !l.is_positive()));
-                                GateElem::GateInput((Some(lit), false))
-                            }
-                            Node::Negated(fidx) => {
-                                if let Some((gi, n)) = gate_output_map.get(&fidx) {
-                                    GateElem::<T>::GateInput((Some(*gi), !n))
-                                } else {
-                                    GateElem::<T>::GateInput((None, true))
-                                }
-                            }
-                            Node::And(fidx, sidx) => {
-                                if let Some((gi1, n1)) = gate_output_map.get(&fidx) {
-                                    if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                        if *n1 {
-                                            if *n2 {
-                                                // and(!gi1,!gi2) -> nor(gi1,gi2)
-                                                GateElem::Gate((
-                                                    Gate::new_nor(Some(*gi1), Some(*gi2)),
-                                                    false,
-                                                ))
-                                            } else {
-                                                GateElem::Gate((
-                                                    Gate::new_nimpl(Some(*gi2), Some(*gi1)),
-                                                    false,
-                                                ))
-                                            }
-                                        } else if *n2 {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(Some(*gi1), Some(*gi2)),
-                                                false,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((
-                                                Gate::new_and(Some(*gi1), Some(*gi2)),
-                                                false,
-                                            ))
-                                        }
-                                    } else {
-                                        if *n1 {
-                                            // and(!gi1,_) -> nimpl(_,gi1)
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(None, Some(*gi1)),
-                                                false,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((Gate::new_and(None, Some(*gi1)), false))
-                                        }
-                                    }
-                                } else if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                    if *n2 {
-                                        // and(_,!gi2) -> nimpl(_,gi2)
-                                        GateElem::Gate((Gate::new_nimpl(None, Some(*gi2)), false))
-                                    } else {
-                                        GateElem::Gate((Gate::new_and(None, Some(*gi2)), false))
-                                    }
-                                } else {
-                                    GateElem::Gate((Gate::new_and(None, None), false))
-                                }
-                            }
-                            Node::Or(fidx, sidx) => {
-                                if let Some((gi1, n1)) = gate_output_map.get(&fidx) {
-                                    if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                        if *n1 {
-                                            if *n2 {
-                                                GateElem::Gate((
-                                                    Gate::new_and(Some(*gi1), Some(*gi2)),
-                                                    true,
-                                                ))
-                                            } else {
-                                                GateElem::Gate((
-                                                    Gate::new_nimpl(Some(*gi1), Some(*gi2)),
-                                                    true,
-                                                ))
-                                            }
-                                        } else if *n2 {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(Some(*gi2), Some(*gi1)),
-                                                true,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((
-                                                Gate::new_nor(Some(*gi1), Some(*gi2)),
-                                                true,
-                                            ))
-                                        }
-                                    } else {
-                                        if *n1 {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(Some(*gi1), None),
-                                                true,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((Gate::new_nor(None, Some(*gi1)), true))
-                                        }
-                                    }
-                                } else if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                    if *n2 {
-                                        GateElem::Gate((Gate::new_nimpl(Some(*gi2), None), true))
-                                    } else {
-                                        GateElem::Gate((Gate::new_nor(None, Some(*gi2)), true))
-                                    }
-                                } else {
-                                    GateElem::Gate((Gate::new_nor(None, None), true))
-                                }
-                            }
-                            Node::Xor(fidx, sidx) | Node::Equal(fidx, sidx) => {
-                                let neg = matches!(node, Node::Xor(_, _));
-                                if let Some((gi1, n1)) = gate_output_map.get(&fidx) {
-                                    if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                        if *n1 {
-                                            if *n2 {
-                                                // and(!gi1,!gi2) -> nor(gi1,gi2)
-                                                GateElem::Gate((
-                                                    Gate::new_xor(Some(*gi1), Some(*gi2)),
-                                                    neg,
-                                                ))
-                                            } else {
-                                                GateElem::Gate((
-                                                    Gate::new_xor(Some(*gi1), Some(*gi2)),
-                                                    !neg,
-                                                ))
-                                            }
-                                        } else if *n2 {
-                                            GateElem::Gate((
-                                                Gate::new_xor(Some(*gi1), Some(*gi2)),
-                                                !neg,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((
-                                                Gate::new_xor(Some(*gi1), Some(*gi2)),
-                                                neg,
-                                            ))
-                                        }
-                                    } else {
-                                        if *n1 {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(None, Some(*gi1)),
-                                                !neg,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((Gate::new_xor(None, Some(*gi1)), neg))
-                                        }
-                                    }
-                                } else if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                    if *n2 {
-                                        GateElem::Gate((Gate::new_xor(None, Some(*gi2)), !neg))
-                                    } else {
-                                        GateElem::Gate((Gate::new_xor(None, Some(*gi2)), neg))
-                                    }
-                                } else {
-                                    GateElem::Gate((Gate::new_xor(None, None), neg))
-                                }
-                            }
-                            Node::Impl(fidx, sidx) => {
-                                if let Some((gi1, n1)) = gate_output_map.get(&fidx) {
-                                    if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                        if *n1 {
-                                            if *n2 {
-                                                GateElem::Gate((
-                                                    Gate::new_nimpl(Some(*gi2), Some(*gi1)),
-                                                    true,
-                                                ))
-                                            } else {
-                                                GateElem::Gate((
-                                                    Gate::new_nor(Some(*gi1), Some(*gi2)),
-                                                    true,
-                                                ))
-                                            }
-                                        } else if *n2 {
-                                            GateElem::Gate((
-                                                Gate::new_and(Some(*gi1), Some(*gi2)),
-                                                true,
-                                            ))
-                                        } else {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(Some(*gi1), Some(*gi2)),
-                                                true,
-                                            ))
-                                        }
-                                    } else {
-                                        if *n1 {
-                                            GateElem::Gate((Gate::new_nor(Some(*gi1), None), true))
-                                        } else {
-                                            GateElem::Gate((
-                                                Gate::new_nimpl(None, Some(*gi1)),
-                                                true,
-                                            ))
-                                        }
-                                    }
-                                } else if let Some((gi2, n2)) = gate_output_map.get(&sidx) {
-                                    if *n2 {
-                                        GateElem::Gate((Gate::new_and(None, Some(*gi2)), true))
-                                    } else {
-                                        GateElem::Gate((Gate::new_nimpl(None, Some(*gi2)), true))
-                                    }
-                                } else {
-                                    GateElem::Gate((Gate::new_nimpl(None, None), true))
-                                }
-                            }
-                        };
-
                         top.path = 1;
                         stack.push(GateEntry {
                             node_index: node.first_path(),
@@ -560,6 +355,102 @@ where
                             gate_elem: GateElem::Empty,
                         });
                     } else {
+                        top.gate_elem = match node {
+                            Node::Single(l) => {
+                                let l = l.varlit().unwrap();
+                                let lit = input_map[&l.positive().unwrap()];
+                                gate_output_map.insert(node_index, (lit, !l.is_positive()));
+                                GateElem::GateInput((Some(lit), !l.is_positive()))
+                            }
+                            Node::Negated(fidx) => {
+                                let (gi, n) = gate_output_map.get(&fidx).unwrap();
+                                GateElem::<T>::GateInput((Some(*gi), !n))
+                            }
+                            Node::And(fidx, sidx) => {
+                                let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
+                                let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
+                                if *n1 {
+                                    if *n2 {
+                                        // and(!gi1,!gi2) -> nor(gi1,gi2)
+                                        GateElem::Gate((
+                                            Gate::new_nor(Some(*gi1), Some(*gi2)),
+                                            false,
+                                        ))
+                                    } else {
+                                        GateElem::Gate((
+                                            Gate::new_nimpl(Some(*gi2), Some(*gi1)),
+                                            false,
+                                        ))
+                                    }
+                                } else if *n2 {
+                                    GateElem::Gate((Gate::new_nimpl(Some(*gi1), Some(*gi2)), false))
+                                } else {
+                                    GateElem::Gate((Gate::new_and(Some(*gi1), Some(*gi2)), false))
+                                }
+                            }
+                            Node::Or(fidx, sidx) => {
+                                let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
+                                let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
+                                if *n1 {
+                                    if *n2 {
+                                        GateElem::Gate((
+                                            Gate::new_and(Some(*gi1), Some(*gi2)),
+                                            true,
+                                        ))
+                                    } else {
+                                        GateElem::Gate((
+                                            Gate::new_nimpl(Some(*gi1), Some(*gi2)),
+                                            true,
+                                        ))
+                                    }
+                                } else if *n2 {
+                                    GateElem::Gate((Gate::new_nimpl(Some(*gi2), Some(*gi1)), true))
+                                } else {
+                                    GateElem::Gate((Gate::new_nor(Some(*gi1), Some(*gi2)), true))
+                                }
+                            }
+                            Node::Xor(fidx, sidx) | Node::Equal(fidx, sidx) => {
+                                let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
+                                let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
+                                let neg = matches!(node, Node::Xor(_, _));
+                                if *n1 {
+                                    if *n2 {
+                                        // and(!gi1,!gi2) -> nor(gi1,gi2)
+                                        GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), neg))
+                                    } else {
+                                        GateElem::Gate((
+                                            Gate::new_xor(Some(*gi1), Some(*gi2)),
+                                            !neg,
+                                        ))
+                                    }
+                                } else if *n2 {
+                                    GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), !neg))
+                                } else {
+                                    GateElem::Gate((Gate::new_xor(Some(*gi1), Some(*gi2)), neg))
+                                }
+                            }
+                            Node::Impl(fidx, sidx) => {
+                                let (gi1, n1) = gate_output_map.get(&fidx).unwrap();
+                                let (gi2, n2) = gate_output_map.get(&sidx).unwrap();
+                                if *n1 {
+                                    if *n2 {
+                                        GateElem::Gate((
+                                            Gate::new_nimpl(Some(*gi2), Some(*gi1)),
+                                            true,
+                                        ))
+                                    } else {
+                                        GateElem::Gate((
+                                            Gate::new_nor(Some(*gi1), Some(*gi2)),
+                                            true,
+                                        ))
+                                    }
+                                } else if *n2 {
+                                    GateElem::Gate((Gate::new_and(Some(*gi1), Some(*gi2)), true))
+                                } else {
+                                    GateElem::Gate((Gate::new_nimpl(Some(*gi1), Some(*gi2)), true))
+                                }
+                            }
+                        };
                         // push gate
                         let gate_elem = top.gate_elem;
                         stack.pop();
