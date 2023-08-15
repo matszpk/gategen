@@ -236,7 +236,7 @@ where
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
                 let node = self.nodes[top.node_index];
-                let first_path = top.path == 0;
+                let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
                     if !node.is_unary() && first_path {
@@ -287,7 +287,7 @@ where
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
                 let node = self.nodes[top.node_index];
-                let first_path = top.path == 0;
+                let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
                     if !node.is_unary() && first_path {
@@ -441,4 +441,35 @@ mod tests {
     use super::*;
     use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl};
     use crate::intexpr::{IntEqual, IntExprNode, IntOrd};
+
+    macro_rules! expr_creator_testcase {
+        ($ec: ident, $v: ident, $vars:expr, $expr: tt, $res: expr) => {
+            $ec = ExprCreator::<isize>::new();
+            $v.clear();
+            $v.push(BoolExprNode::single($ec.clone(), false));
+            for _ in 0..$vars {
+                $v.push(BoolExprNode::variable($ec.clone()));
+            }
+            let expr_indices = $expr;
+            test_println!("expr: {:?}", expr_indices);
+            assert_eq!($res, $ec.borrow().to_circuit(expr_indices));
+        };
+    }
+
+    #[test]
+    fn test_to_circuit_trivial() {
+        let mut v = vec![];
+        #[allow(unused_assignments)]
+        let mut ec = ExprCreator::<isize>::new();
+        expr_creator_testcase!(
+            ec,
+            v,
+            2,
+            { [v[1].index] },
+            (
+                Circuit::new(1, [], [(0, false)]).unwrap(),
+                HashMap::from_iter([(1, 0)])
+            )
+        );
+    }
 }
