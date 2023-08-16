@@ -223,7 +223,7 @@ where
                 let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
-                    if !node.is_unary() && first_path {
+                    if first_path {
                         visited[node_index] = true;
                     }
                     match node {
@@ -380,7 +380,7 @@ where
                 };
 
                 if !first_path || !visited[node_index] {
-                    if !node.is_unary() && first_path {
+                    if first_path {
                         visited[node_index] = true;
                     }
                     if first_path {
@@ -1183,6 +1183,7 @@ mod tests {
         (0..8).for_each(|x| indexes[8 + x] = m.bit(x).index);
         indexes[16] = c.index;
         let (circuit, input_map) = ec.borrow().to_circuit(indexes);
+        println!("Circuit len: {}", circuit.len());
         for av in i8::MIN..=i8::MAX {
             for bv in i8::MIN..=i8::MAX {
                 let exp_cv = (bv != 0) && (av != i8::MIN || bv != -1);
