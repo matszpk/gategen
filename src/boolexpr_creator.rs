@@ -89,23 +89,6 @@ impl<T: VarLit + Debug> Node<T> {
     fn is_unary(&self) -> bool {
         matches!(self, Node::Single(_) | Node::Negated(_))
     }
-
-    /// Returns true if node represents And operation.
-    #[inline]
-    fn is_conj(&self) -> bool {
-        matches!(self, Node::And(_, _))
-    }
-
-    /// Returns true if node represents Or or Implication operation.
-    #[inline]
-    fn is_disjunc(&self) -> bool {
-        matches!(self, Node::Or(_, _) | Node::Impl(_, _))
-    }
-
-    #[inline]
-    fn is_xor_or_equal(&self) -> bool {
-        matches!(self, Node::Xor(_, _) | Node::Equal(_, _))
-    }
 }
 
 /// The ExprCreator holds all expressions which will be written later.
@@ -246,10 +229,13 @@ where
                     match node {
                         Node::Single(l) => {
                             if let Some(l) = l.varlit() {
-                                input_map.insert(
-                                    l.positive().unwrap(),
-                                    Unsigned::<T>::try_from(input_map.len()).unwrap(),
-                                );
+                                let lp = l.positive().unwrap();
+                                if input_map.get(&lp).is_none() {
+                                    input_map.insert(
+                                        lp,
+                                        Unsigned::<T>::try_from(input_map.len()).unwrap(),
+                                    );
+                                }
                             } else {
                                 panic!("Unsupported!");
                             }
@@ -427,6 +413,13 @@ where
                 }
             }
         }
+        test_println!(
+            "xxx: {} {:?} {:?} {:?}",
+            input_len,
+            gates,
+            circ_outputs,
+            input_map
+        );
         (
             Circuit::<<T as VarLit>::Unsigned>::new(
                 Unsigned::<T>::try_from(input_len).unwrap(),
@@ -795,12 +788,7 @@ mod tests {
             3,
             { [(v[1].clone() & !(v[2].clone() | v[3].clone())).index] },
             (
-                Circuit::new(
-                    3,
-                    [Gate::new_nor(0, 1), Gate::new_and(3, 2)],
-                    [(4, false)]
-                )
-                .unwrap(),
+                Circuit::new(3, [Gate::new_nor(0, 1), Gate::new_and(3, 2)], [(4, false)]).unwrap(),
                 HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
             )
         );
@@ -810,12 +798,7 @@ mod tests {
             3,
             { [(!(v[2].clone() | v[3].clone()) & v[1].clone()).index] },
             (
-                Circuit::new(
-                    3,
-                    [Gate::new_nor(0, 1), Gate::new_and(3, 2)],
-                    [(4, false)]
-                )
-                .unwrap(),
+                Circuit::new(3, [Gate::new_nor(0, 1), Gate::new_and(3, 2)], [(4, false)]).unwrap(),
                 HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
             )
         );
@@ -825,12 +808,7 @@ mod tests {
             3,
             { [(!v[1].clone() & (v[2].clone() ^ !v[3].clone())).index] },
             (
-                Circuit::new(
-                    3,
-                    [Gate::new_xor(0, 1), Gate::new_nor(3, 2)],
-                    [(4, false)]
-                )
-                .unwrap(),
+                Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_nor(3, 2)], [(4, false)]).unwrap(),
                 HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
             )
         );
@@ -840,13 +818,31 @@ mod tests {
             3,
             { [(!v[1].clone() | (v[2].clone() ^ !v[3].clone())).index] },
             (
+                Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_and(3, 2)], [(4, true)]).unwrap(),
+                HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let r1 = v[1].clone() & v[2].clone() & v[3].clone();
+                let r2 = r1.clone() ^ v[1].clone();
+                [r1.index, r2.index]
+            },
+            (
                 Circuit::new(
                     3,
-                    [Gate::new_xor(0, 1), Gate::new_and(3, 2)],
-                    [(4, true)]
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(3, 2),
+                        Gate::new_xor(4, 0)
+                    ],
+                    [(4, false), (5, false)]
                 )
                 .unwrap(),
-                HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
             )
         );
     }
