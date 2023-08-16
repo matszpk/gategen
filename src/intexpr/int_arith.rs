@@ -637,7 +637,7 @@ where
                 indexes: output
             };
             // carry from subtraction (true if no borrow).
-            let divbit = !bzerobits & carry;
+            let divbit = bzerobits & carry;
             a = int_ite(divbit.clone(), diff, a);
             divbits[i] = divbit.index;
         }
