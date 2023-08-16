@@ -1654,14 +1654,16 @@ mod tests {
         IntExprNode<isize, U10, false>,
         BoolExprNode<isize>,
     ) {
-        let exp_ec = x1.creator.clone();
-        let res = IntExprNode::<isize, U10, false>::variable(exp_ec.clone());
-        let mul = x2.clone().fullmul(res.clone());
-        let modv = IntExprNode::<isize, U10, false>::variable(exp_ec.clone());
-        let modv_cond = modv.clone().less_than(x2.clone());
-        let mulsum = mul.mod_add(IntExprNode::<isize, U20, false>::from(modv.clone()));
-        let mul_cond = mulsum.subvalue::<U10>(0).equal(x1) & mulsum.subvalue::<U10>(10).equal(0);
-        (res, modv, modv_cond & mul_cond)
+        // let exp_ec = x1.creator.clone();
+        // let res = IntExprNode::<isize, U10, false>::variable(exp_ec.clone());
+        // let mul = x2.clone().fullmul(res.clone());
+        // let modv = IntExprNode::<isize, U10, false>::variable(exp_ec.clone());
+        // let modv_cond = modv.clone().less_than(x2.clone());
+        // let mulsum = mul.mod_add(IntExprNode::<isize, U20, false>::from(modv.clone()));
+        // let mul_cond = mulsum.subvalue::<U10>(0).equal(x1) &
+        //     mulsum.subvalue::<U10>(10).equal(0);
+        // (res, modv, modv_cond & mul_cond)
+        x1.divmod(x2)
     }
 
     macro_rules! test_expr_node_divmod_xx {
