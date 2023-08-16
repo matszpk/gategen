@@ -442,8 +442,10 @@ pub type ExprCreatorSys = ExprCreator<isize>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl, full_adder, bool_ite};
-    use crate::intexpr::{IntEqual, IntExprNode, IntOrd};
+    use crate::boolexpr::{bool_ite, full_adder, BoolEqual, BoolExprNode, BoolImpl};
+    use crate::intexpr::{BitVal, IntEqual, IntExprNode, IntModSub, IntOrd};
+    use generic_array::typenum::*;
+    use generic_array::*;
 
     macro_rules! expr_creator_testcase {
         ($ec: ident, $v: ident, $vars:expr, $expr: tt, $res: expr) => {
@@ -822,7 +824,7 @@ mod tests {
             )
         );
     }
-    
+
     #[test]
     fn test_to_circuit_2() {
         let mut v = vec![];
@@ -986,5 +988,34 @@ mod tests {
                 HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
             )
         );
+    }
+
+    #[test]
+    fn test_to_circuit_3() {
+        let ec = ExprCreator::<isize>::new();
+        let a = IntExprNode::<_, U3, false>::variable(ec.clone());
+        let b = IntExprNode::<_, U3, false>::variable(ec.clone());
+        let c = a.clone().mod_sub(b.clone());
+        let mut indexes = [0; 3];
+        (0..3).for_each(|x| indexes[x] = c.bit(x).index);
+        let (circuit, input_map) = ec.borrow().to_circuit(indexes);
+        for av in 0u32..8 {
+            for bv in 0u32..8 {
+                let exp_cv = (av.overflowing_sub(bv).0) & 7;
+                let mut input = [false; 6];
+                (0..3).for_each(|x| {
+                    input[input_map[&a.bit(x).varlit().unwrap()]] = ((av >> x) & 1) != 0;
+                    input[input_map[&b.bit(x).varlit().unwrap()]] = ((bv >> x) & 1) != 0;
+                });
+                let cv_vec = circuit.eval(input);
+                let mut cv = 0;
+                cv_vec.into_iter().enumerate().for_each(|(i, bv)| {
+                    if bv {
+                        cv |= 1 << i;
+                    }
+                });
+                assert_eq!(exp_cv, cv, "{}-{}", av, bv);
+            }
+        }
     }
 }
