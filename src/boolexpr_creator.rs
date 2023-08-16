@@ -467,7 +467,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_circuit_trivial() {
+    fn test_to_circuit_1() {
         let mut v = vec![];
         #[allow(unused_assignments)]
         let mut ec = ExprCreator::<isize>::new();
