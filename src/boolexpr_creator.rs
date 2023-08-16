@@ -443,8 +443,8 @@ pub type ExprCreatorSys = ExprCreator<isize>;
 mod tests {
     use super::*;
     use crate::boolexpr::{bool_ite, full_adder, BoolEqual, BoolExprNode, BoolImpl};
-    use crate::intexpr::{BitVal, DivMod, FullMul, IntEqual, IntExprNode, IntModSub, IntOrd};
     use crate::dynintexpr::DynIntExprNode;
+    use crate::intexpr::{BitVal, DivMod, FullMul, IntEqual, IntExprNode, IntModSub, IntOrd};
     use generic_array::typenum::*;
     use generic_array::*;
 
@@ -1044,7 +1044,7 @@ mod tests {
                 assert_eq!(exp_cv, cv, "fullmul({}, {})", av, bv);
             }
         }
-        
+
         let ec = ExprCreator::<isize>::new();
         let a = IntExprNode::<_, U5, false>::variable(ec.clone());
         let b = IntExprNode::<_, U5, false>::variable(ec.clone());
@@ -1087,7 +1087,7 @@ mod tests {
                 }
             }
         }
-        
+
         let ec = ExprCreator::<isize>::new();
         let a = IntExprNode::<_, U8, true>::variable(ec.clone());
         let b = IntExprNode::<_, U8, true>::variable(ec.clone());
@@ -1130,7 +1130,7 @@ mod tests {
                 }
             }
         }
-        
+
         let ec = ExprCreator::<isize>::new();
         let a = DynIntExprNode::<_, false>::variable(ec.clone(), 5);
         let b = DynIntExprNode::<_, false>::variable(ec.clone(), 5);
@@ -1173,7 +1173,7 @@ mod tests {
                 }
             }
         }
-        
+
         let ec = ExprCreator::<isize>::new();
         let a = DynIntExprNode::<_, true>::variable(ec.clone(), 8);
         let b = DynIntExprNode::<_, true>::variable(ec.clone(), 8);

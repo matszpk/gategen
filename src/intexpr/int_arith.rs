@@ -630,18 +630,29 @@ where
             }
             let bshifted = rhs.clone() << i;
             let mut output = GenericArray::<usize, N>::default();
-            let (carry, _) = helper_subc_cout(&mut output, &a, &bshifted,
-                        BoolExprNode::single_value(self.creator.clone(), true));
+            let (carry, _) = helper_subc_cout(
+                &mut output,
+                &a,
+                &bshifted,
+                BoolExprNode::single_value(self.creator.clone(), true),
+            );
             let diff = IntExprNode {
                 creator: self.creator.clone(),
-                indexes: output
+                indexes: output,
             };
             // carry from subtraction (true if no borrow).
             let divbit = bzerobits & carry;
             a = int_ite(divbit.clone(), diff, a);
             divbits[i] = divbit.index;
         }
-        (IntExprNode{ creator: self.creator, indexes: divbits }, a, !if_zero)
+        (
+            IntExprNode {
+                creator: self.creator,
+                indexes: divbits,
+            },
+            a,
+            !if_zero,
+        )
     }
 }
 

@@ -19,6 +19,7 @@
 
 use std::cell::RefCell;
 use std::cmp;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::iter;
 use std::ops::{Add, BitAnd, BitOr, Neg, Not, Sub};
@@ -33,6 +34,7 @@ use crate::dynintexpr::DynIntExprNode;
 use crate::gate::{Literal, VarLit};
 use crate::int_utils::*;
 use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
+use gatesim::Circuit;
 
 /// Integer error.
 #[derive(thiserror::Error, Debug)]
@@ -155,6 +157,27 @@ where
             creator: self.creator,
             indexes: self.indexes,
         }
+    }
+
+    pub fn to_circuit(
+        &self,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        HashMap<T, <T as VarLit>::Unsigned>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned:
+            Clone + Copy + PartialEq + cmp::Eq + PartialOrd + cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        self.creator
+            .borrow()
+            .to_circuit(self.indexes.iter().copied())
     }
 }
 

@@ -18,6 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io::Write;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
@@ -27,6 +28,7 @@ use crate::boolexpr_creator::Node;
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 
 use crate::gate::{Literal, VarLit};
+use gatesim::Circuit;
 
 /// Equality operator for boolean expressions and boolean words.
 ///
@@ -145,23 +147,23 @@ where
         }
     }
 
-    // /// Writes expression to CNF.
-    // #[inline]
-    // pub fn write<W: Write>(&self, cnf: &mut CNFWriter<W>) -> Result<(), CNFError> {
-    //     let empty: [(Quantifier, Vec<T>); 0] = [];
-    //     self.creator.borrow().write(self.index, empty, cnf)
-    // }
-    //
-    // /// Writes quantified expression to QCNF.
-    // #[inline]
-    // pub fn write_quant<W, QL, Q>(&self, quants: QL, cnf: &mut CNFWriter<W>) -> Result<(), CNFError>
-    // where
-    //     W: Write,
-    //     QL: IntoIterator<Item = (Quantifier, Q)>,
-    //     Q: QuantSet<T>,
-    // {
-    //     self.creator.borrow().write(self.index, quants, cnf)
-    // }
+    pub fn to_circuit(
+        &self,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        HashMap<T, <T as VarLit>::Unsigned>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        self.creator.borrow().to_circuit([self.index])
+    }
 }
 
 /// An implementation Not for BoolExprNode.

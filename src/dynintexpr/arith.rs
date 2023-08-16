@@ -895,7 +895,9 @@ where
         assert_eq!(self.indexes.len(), rhs.indexes.len());
         let creator = self.creator.clone();
         let len = self.indexes.len();
-        let if_zero = rhs.clone().equal(DynIntExprNode::filled(creator, len, false));
+        let if_zero = rhs
+            .clone()
+            .equal(DynIntExprNode::filled(creator, len, false));
         let mut a = self.clone();
         let mut divbits = vec![0; len];
         for ki in 0..len {
@@ -906,18 +908,29 @@ where
             }
             let bshifted = rhs.clone() << i;
             let mut output = vec![0; len];
-            let (carry, _) = helper_subc_cout(&mut output, &a, &bshifted,
-                        BoolExprNode::single_value(self.creator.clone(), true));
+            let (carry, _) = helper_subc_cout(
+                &mut output,
+                &a,
+                &bshifted,
+                BoolExprNode::single_value(self.creator.clone(), true),
+            );
             let diff = DynIntExprNode {
                 creator: self.creator.clone(),
-                indexes: output
+                indexes: output,
             };
             // carry from subtraction (true if no borrow).
             let divbit = bzerobits & carry;
             a = dynint_ite(divbit.clone(), diff, a);
             divbits[i] = divbit.index;
         }
-        (DynIntExprNode{ creator: self.creator, indexes: divbits }, a, !if_zero)
+        (
+            DynIntExprNode {
+                creator: self.creator,
+                indexes: divbits,
+            },
+            a,
+            !if_zero,
+        )
     }
 }
 

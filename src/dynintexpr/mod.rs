@@ -18,6 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Neg;
 use std::rc::Rc;
@@ -34,6 +35,7 @@ pub use crate::intexpr::{
     IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd,
 };
 use crate::{impl_int_ipty, impl_int_upty};
+use gatesim::Circuit;
 
 pub mod arith;
 pub use arith::*;
@@ -149,6 +151,27 @@ where
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.indexes.is_empty()
+    }
+
+    pub fn to_circuit(
+        &self,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        HashMap<T, <T as VarLit>::Unsigned>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned:
+            Clone + Copy + PartialEq + std::cmp::Eq + PartialOrd + std::cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        self.creator
+            .borrow()
+            .to_circuit(self.indexes.iter().copied())
     }
 }
 
