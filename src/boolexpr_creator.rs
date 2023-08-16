@@ -442,7 +442,7 @@ pub type ExprCreatorSys = ExprCreator<isize>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl};
+    use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl, full_adder, bool_ite};
     use crate::intexpr::{IntEqual, IntExprNode, IntOrd};
 
     macro_rules! expr_creator_testcase {
@@ -454,7 +454,6 @@ mod tests {
                 $v.push(BoolExprNode::variable($ec.clone()));
             }
             let expr_indices = $expr;
-            test_println!("expr: {:?}", expr_indices);
             assert_eq!($res, $ec.borrow().to_circuit(expr_indices));
         };
     }
@@ -939,6 +938,49 @@ mod tests {
                         Gate::new_nimpl(4, 0)
                     ],
                     [(4, true), (5, false)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let (s, c) = full_adder(v[1].clone(), v[2].clone(), v[3].clone());
+                [s.index, c.index]
+            },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),
+                        Gate::new_xor(3, 2),
+                        Gate::new_and(3, 2),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6)
+                    ],
+                    [(4, false), (7, true)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            { [bool_ite(v[1].clone(), v[2].clone(), v[3].clone()).index] },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_nimpl(2, 0),
+                        Gate::new_nor(3, 4)
+                    ],
+                    [(5, true)]
                 )
                 .unwrap(),
                 HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
