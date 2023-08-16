@@ -618,39 +618,30 @@ where
     type OutputCond = BoolExprNode<T>;
 
     fn divmod(self, rhs: Self) -> (Self::Output, Self::Output, Self::OutputCond) {
-        let divres = IntExprNode::<T, N, false>::variable(self.creator.clone());
-        let mut matrix = gen_dadda_matrix(
-            self.creator.clone(),
-            &rhs.indexes,
-            &divres.indexes,
-            2 * N::USIZE,
-        );
-        let mulres = gen_dadda_mult(self.creator.clone(), &mut matrix);
-
-        // modv - division modulo
-        let modv = IntExprNode::<T, N, false>::variable(self.creator.clone());
-        let modv_cond = modv.clone().less_than(rhs);
-
-        // add modulo to mulres
-        let (mulres_lo, carry) = IntExprNode::<T, N, false> {
-            creator: self.creator.clone(),
-            indexes: GenericArray::clone_from_slice(&mulres[0..N::USIZE]),
-        }
-        .addc_with_carry(
-            modv.clone(),
-            BoolExprNode::single_value(self.creator.clone(), false),
-        );
-        let mulres_hi = IntExprNode::<T, N, false> {
-            creator: self.creator.clone(),
-            indexes: GenericArray::clone_from_slice(&mulres[N::USIZE..]),
-        }
-        .add_same_carry(carry);
-        // condition for mulres - mulres_lo = self,  mulres_hi = 0
         let creator = self.creator.clone();
-        let mulres_cond =
-            mulres_lo.equal(self) & mulres_hi.equal(IntExprNode::filled(creator, false));
-
-        (divres, modv, modv_cond & mulres_cond)
+        let if_zero = rhs.clone().equal(IntExprNode::filled(creator, false));
+        let mut a = self.clone();
+        let mut divbits = GenericArray::<usize, N>::default();
+        for ki in 0..N::USIZE {
+            let i = N::USIZE - ki - 1;
+            let mut bzerobits = BoolExprNode::single(self.creator.clone(), true);
+            for j in ki + 1..N::USIZE {
+                bzerobits &= rhs.bit(j).bequal(false);
+            }
+            let bshifted = rhs.clone() << i;
+            let mut output = GenericArray::<usize, N>::default();
+            let (carry, _) = helper_subc_cout(&mut output, &a, &bshifted,
+                        BoolExprNode::single_value(self.creator.clone(), true));
+            let diff = IntExprNode {
+                creator: self.creator.clone(),
+                indexes: output
+            };
+            // carry from subtraction (true if no borrow).
+            let divbit = !bzerobits & carry;
+            a = int_ite(divbit.clone(), diff, a);
+            divbits[i] = divbit.index;
+        }
+        (IntExprNode{ creator: self.creator, indexes: divbits }, a, !if_zero)
     }
 }
 

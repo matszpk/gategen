@@ -230,7 +230,7 @@ where
                         Node::Single(l) => {
                             if let Some(l) = l.varlit() {
                                 let lp = l.positive().unwrap();
-                                if input_map.get(&lp).is_none() {
+                                if !input_map.contains_key(&lp) {
                                     input_map.insert(
                                         lp,
                                         Unsigned::<T>::try_from(input_map.len()).unwrap(),
