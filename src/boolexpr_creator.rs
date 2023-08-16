@@ -443,7 +443,7 @@ pub type ExprCreatorSys = ExprCreator<isize>;
 mod tests {
     use super::*;
     use crate::boolexpr::{bool_ite, full_adder, BoolEqual, BoolExprNode, BoolImpl};
-    use crate::intexpr::{BitVal, FullMul, IntEqual, IntExprNode, IntModSub, IntOrd};
+    use crate::intexpr::{BitVal, DivMod, FullMul, IntEqual, IntExprNode, IntModSub, IntOrd};
     use generic_array::typenum::*;
     use generic_array::*;
 
@@ -1041,6 +1041,49 @@ mod tests {
                     }
                 });
                 assert_eq!(exp_cv, cv, "fullmul({}, {})", av, bv);
+            }
+        }
+        
+        let ec = ExprCreator::<isize>::new();
+        let a = IntExprNode::<_, U5, false>::variable(ec.clone());
+        let b = IntExprNode::<_, U5, false>::variable(ec.clone());
+        let (d, m, c) = a.clone().divmod(b.clone());
+        let mut indexes = [0; 11];
+        (0..5).for_each(|x| indexes[x] = d.bit(x).index);
+        (0..5).for_each(|x| indexes[5 + x] = m.bit(x).index);
+        indexes[10] = c.index;
+        let (circuit, input_map) = ec.borrow().to_circuit(indexes);
+        for av in 0u32..32 {
+            for bv in 0u32..32 {
+                let exp_dv = if bv != 0 { av / bv } else { 0 };
+                let exp_mv = if bv != 0 { av % bv } else { 0 };
+                let exp_cv = bv != 0;
+                let mut input = [false; 10];
+                (0..5).for_each(|x| {
+                    input[input_map[&a.bit(x).varlit().unwrap()]] = ((av >> x) & 1) != 0;
+                    input[input_map[&b.bit(x).varlit().unwrap()]] = ((bv >> x) & 1) != 0;
+                });
+                let rv_vec = circuit.eval(input);
+                let mut dv = 0;
+                let mut mv = 0;
+                let mut cv = false;
+                rv_vec.into_iter().enumerate().for_each(|(i, bv)| {
+                    if bv {
+                        if i < 5 {
+                            dv |= 1 << i;
+                        } else if i < 10 {
+                            mv |= 1 << (i - 5);
+                        } else {
+                            cv = true;
+                        }
+                    }
+                });
+                println!("dcfv: {} {}: {} {} {}", av, bv, dv, mv, cv);
+                assert_eq!(exp_cv, cv, "divmod({}, {}).c", av, bv);
+                if exp_cv {
+                    assert_eq!(exp_dv, dv, "divmod({}, {}).d", av, bv);
+                    assert_eq!(exp_mv, mv, "divmod({}, {}).m", av, bv);
+                }
             }
         }
     }

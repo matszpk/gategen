@@ -603,7 +603,7 @@ macro_rules! impl_int_fullmul_ipty {
 impl_int_upty_ty1!(impl_int_fullmul_upty);
 impl_int_ipty_ty1!(impl_int_fullmul_ipty);
 
-// DivMod - dividion and remainder all in one
+// DivMod - division and remainder all in one
 
 impl<T, N> DivMod<IntExprNode<T, N, false>> for IntExprNode<T, N, false>
 where
