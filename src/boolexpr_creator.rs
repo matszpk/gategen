@@ -819,5 +819,35 @@ mod tests {
                 HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
             )
         );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            { [(!v[1].clone() & (v[2].clone() ^ !v[3].clone())).index] },
+            (
+                Circuit::new(
+                    3,
+                    [Gate::new_xor(0, 1), Gate::new_nor(3, 2)],
+                    [(4, false)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            { [(!v[1].clone() | (v[2].clone() ^ !v[3].clone())).index] },
+            (
+                Circuit::new(
+                    3,
+                    [Gate::new_xor(0, 1), Gate::new_and(3, 2)],
+                    [(4, true)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
+            )
+        );
     }
 }
