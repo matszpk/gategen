@@ -822,6 +822,13 @@ mod tests {
                 HashMap::from_iter([(2, 0), (1, 2), (3, 1)])
             )
         );
+    }
+    
+    #[test]
+    fn test_to_circuit_2() {
+        let mut v = vec![];
+        #[allow(unused_assignments)]
+        let mut ec = ExprCreator::<isize>::new();
         expr_creator_testcase!(
             ec,
             v,
@@ -840,6 +847,98 @@ mod tests {
                         Gate::new_xor(4, 0)
                     ],
                     [(4, false), (5, false)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let r1 = v[1].clone() & v[2].clone() & v[3].clone();
+                let r2 = !r1.clone() ^ v[1].clone();
+                [r1.index, r2.index]
+            },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(3, 2),
+                        Gate::new_xor(4, 0)
+                    ],
+                    [(4, false), (5, true)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let r1 = v[1].clone() & v[2].clone() & v[3].clone();
+                let r2 = r1.clone() | v[1].clone();
+                [r1.index, r2.index]
+            },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(3, 2),
+                        Gate::new_nor(4, 0)
+                    ],
+                    [(4, false), (5, true)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let r1 = v[1].clone() & v[2].clone() & v[3].clone();
+                let r2 = !(r1.clone() | v[1].clone());
+                [r1.index, r2.index]
+            },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(3, 2),
+                        Gate::new_nor(4, 0)
+                    ],
+                    [(4, false), (5, false)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            3,
+            {
+                let r1 = !(v[1].clone() & v[2].clone() & v[3].clone());
+                let r2 = !(r1.clone() | v[1].clone());
+                [r1.index, r2.index]
+            },
+            (
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(3, 2),
+                        Gate::new_nimpl(4, 0)
+                    ],
+                    [(4, true), (5, false)]
                 )
                 .unwrap(),
                 HashMap::from_iter([(1, 0), (3, 2), (2, 1)])
