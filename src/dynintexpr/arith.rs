@@ -900,12 +900,20 @@ where
             .equal(DynIntExprNode::filled(creator, len, false));
         let mut a = self.clone();
         let mut divbits = vec![0; len];
+        let mut bzerobits_conds = vec![];
+        {
+            // generate list of conditions (b[n-1]==0), (b[n-1]==0 and b[n-2]==0),
+            //   (b[n-1]==0 and b[n-2]==0 and ...), ...
+            let mut bzerobits = BoolExprNode::single(self.creator.clone(), true);
+            bzerobits_conds.push(bzerobits.clone());
+            for i in (1..len).rev() {
+                bzerobits &= rhs.bit(i).bequal(false);
+                bzerobits_conds.push(bzerobits.clone());
+            }
+        }
         for ki in 0..len {
             let i = len - ki - 1;
-            let mut bzerobits = BoolExprNode::single(self.creator.clone(), true);
-            for j in ki + 1..len {
-                bzerobits &= rhs.bit(j).bequal(false);
-            }
+            let bzerobits = bzerobits_conds.pop().unwrap();
             let bshifted = rhs.clone() << i;
             let mut output = vec![0; len];
             let (carry, _) = helper_subc_cout(
