@@ -173,6 +173,19 @@ where
             .borrow()
             .to_circuit(self.indexes.iter().copied())
     }
+
+    pub fn from_circuit(
+        circuit: Circuit<<T as VarLit>::Unsigned>,
+        inputs: impl IntoIterator<Item = BoolExprNode<T>>,
+    ) -> Self
+    where
+        <T as VarLit>::Unsigned:
+            Clone + Copy + PartialEq + std::cmp::Eq + PartialOrd + std::cmp::Ord + Default,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        DynIntExprNode::from_boolexprs(BoolExprNode::from_circuit(circuit, inputs))
+    }
 }
 
 impl<T> DynIntExprNode<T, false>

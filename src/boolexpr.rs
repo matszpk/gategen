@@ -28,7 +28,7 @@ use crate::boolexpr_creator::Node;
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 
 use crate::gate::{Literal, VarLit};
-use gatesim::Circuit;
+use gatesim::{Circuit, Gate, GateFunc};
 
 /// Equality operator for boolean expressions and boolean words.
 ///
@@ -163,6 +163,40 @@ where
         <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
     {
         self.creator.borrow().to_circuit([self.index])
+    }
+
+    pub fn from_circuit(
+        circuit: Circuit<<T as VarLit>::Unsigned>,
+        inputs: impl IntoIterator<Item = Self>,
+    ) -> Vec<Self>
+    where
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        let mut out_exprs = Vec::from_iter(inputs);
+        for g in circuit.gates() {
+            let i0 = usize::try_from(g.i0).unwrap();
+            let i1 = usize::try_from(g.i1).unwrap();
+            out_exprs.push(match g.func {
+                GateFunc::And => out_exprs[i0].clone() & out_exprs[i1].clone(),
+                GateFunc::Nor => !out_exprs[i0].clone() & !out_exprs[i1].clone(),
+                GateFunc::Nimpl => out_exprs[i0].clone() & !out_exprs[i1].clone(),
+                GateFunc::Xor => out_exprs[i0].clone() ^ out_exprs[i1].clone(),
+            });
+        }
+        circuit
+            .outputs()
+            .into_iter()
+            .map(|(i, n)| {
+                let out = out_exprs[usize::try_from(*i).unwrap()].clone();
+                if *n {
+                    !out
+                } else {
+                    out
+                }
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -1454,6 +1488,46 @@ mod tests {
             assert_eq!(7, c.index);
             assert_eq!(exp_ec, *ec.borrow());
         }
+    }
+
+    #[test]
+    fn test_from_circuit() {
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true)],
+        )
+        .unwrap();
+        let ec = ExprCreator::<isize>::new();
+        let v1 = BoolExprNode::variable(ec.clone());
+        let v2 = BoolExprNode::variable(ec.clone());
+        let v3 = BoolExprNode::single_value(ec.clone(), false);
+        use crate::intexpr::IntExprNode;
+        use generic_array::typenum::*;
+        use generic_array::*;
+        let outs = IntExprNode::<_, U2, false>::from_boolexprs(BoolExprNode::from_circuit(
+            circuit,
+            [v1.clone(), v2.clone(), v3.clone()],
+        ))
+        .unwrap();
+        assert_eq!(
+            (
+                Circuit::new(
+                    2,
+                    [Gate::new_xor(0, 1), Gate::new_and(0, 1)],
+                    [(2, false), (3, false)]
+                )
+                .unwrap(),
+                HashMap::from_iter([(1, 0), (2, 1)])
+            ),
+            outs.to_circuit()
+        );
     }
 }
 
