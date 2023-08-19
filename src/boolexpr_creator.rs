@@ -500,6 +500,16 @@ mod tests {
             ec,
             v,
             1,
+            { [v[1].index, 1] },
+            (
+                Circuit::new(1, [], [(0, false)]).unwrap(),
+                HashMap::from_iter([(1, 0)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            1,
             { [(!v[1].clone()).index] },
             (
                 Circuit::new(1, [], [(0, true)]).unwrap(),
