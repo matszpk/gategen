@@ -215,6 +215,10 @@ where
         let mut visited = vec![false; self.nodes.len()];
         // collect inputs
         for start in &outputs {
+            if *start == 0 || *start == 1 {
+                // skip single values
+                continue;
+            }
             let mut stack = vec![SimpleEntry::new_root(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
@@ -270,6 +274,10 @@ where
         let mut gates = vec![];
         let mut circ_outputs = vec![];
         for start in &outputs {
+            if *start == 0 || *start == 1 {
+                // skip single values
+                continue;
+            }
             let mut stack = vec![SimpleEntry::new_root(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
@@ -473,6 +481,16 @@ mod tests {
             v,
             1,
             { [v[1].index] },
+            (
+                Circuit::new(1, [], [(0, false)]).unwrap(),
+                HashMap::from_iter([(1, 0)])
+            )
+        );
+        expr_creator_testcase!(
+            ec,
+            v,
+            1,
+            { [v[1].index, 0] },
             (
                 Circuit::new(1, [], [(0, false)]).unwrap(),
                 HashMap::from_iter([(1, 0)])
