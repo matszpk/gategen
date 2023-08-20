@@ -178,6 +178,55 @@ where
     new_xxx!(new_xor, Xor);
     new_xxx!(new_equal, Equal);
     new_xxx!(new_impl, Impl);
+    
+    pub fn optimize_clauses(
+        &self,
+        outputs: impl IntoIterator<Item = usize>,
+    ) -> (
+        Rc<RefCell<Self>>,
+        Vec<usize>
+    ) {
+        let outputs = Vec::from_iter(outputs);
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        enum ClauseLit {
+            Literal(usize, bool),   // single literal
+            Clause(usize, bool),    // other clause
+        }
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        enum ClauseType {
+            AndOr,  // conjuction or disjunction depend from positive or negative connection
+            XorEq,    // xor or eqaulity depend from positive or negative connection
+        }
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        struct Clause {
+            ctype: ClauseType,
+            literals: Vec<ClauseLit>,    // it can be same literals or other clauses
+        }
+        
+        let mut occur_map = HashMap::<(usize, bool), usize>::new();
+        
+        // collecting occurrences of nodes
+        for start in &outputs {
+            if *start == 0 || *start == 1 {
+                // skip single values
+                continue;
+            }
+        }
+        
+        // divide into clauses
+        for start in &outputs {
+            if *start == 0 || *start == 1 {
+                // skip single values
+                continue;
+            }
+        }
+        
+        // optimize clauses
+        
+        // construct from clauses
+        
+        (Self::new(), Vec::from_iter(outputs))
+    }
 
     pub fn to_circuit(
         &self,
