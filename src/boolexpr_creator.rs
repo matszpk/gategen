@@ -203,13 +203,88 @@ where
             literals: Vec<ClauseLit>,    // it can be same literals or other clauses
         }
         
-        let mut occur_map = HashMap::<(usize, bool), usize>::new();
+        // key - index of node
+        // value - (occurrences, touch first clause)
+        let mut occur_map = vec![(0, false); self.nodes.len()];
+        let mut binary_map = vec![(0, false); self.nodes.len()];
         
+        #[derive(Clone, Copy)]
+        struct OccurEntry {
+            node_index: usize,
+            path: usize,
+            neg: bool,
+            binary_node: Option<usize>,  //
+        }
+        impl OccurEntry {
+            #[inline]
+            fn new_root(start: usize) -> Self {
+                Self {
+                    node_index: start,
+                    path: 0,
+                    neg: false,
+                    binary_node: None
+                }
+            }
+        }
+        
+        let mut visited = vec![false; self.nodes.len()];
         // collecting occurrences of nodes
         for start in &outputs {
             if *start == 0 || *start == 1 {
                 // skip single values
                 continue;
+            }
+            let mut stack = vec![OccurEntry::new_root(*start)];
+            while !stack.is_empty() {
+                let mut top = stack.last_mut().unwrap();
+                let node_index = top.node_index;
+                let node = self.nodes[top.node_index];
+                let first_path = top.path == 0 && !node.is_single();
+                let second_path = top.path == 1 && !node.is_unary();
+                if !first_path || !visited[node_index] {
+                    if first_path {
+                        visited[node_index] = true;
+                    }
+                    let (next_neg, neg) = if node.is_negated() {
+                        (!top.neg, !top.neg)
+                    } else {
+                        (false, top.neg)
+                    };
+                    if first_path {
+                        if node.is_negated() {
+                            binary_map[node_index] = (top.binary_node.unwrap(), neg);
+                        }
+                        top.binary_node = if !node.is_unary() {
+                            Some(node_index)
+                        } else {
+                            None
+                        };
+                        top.path = 1;
+                        stack.push(OccurEntry {
+                            node_index: node.first_path(),
+                            path: 0,
+                            neg: next_neg,
+                            binary_node: None
+                        });
+                    } else if second_path {
+                        top.path = 2;
+                        stack.push(OccurEntry {
+                            node_index: node.second_path(),
+                            path: 0,
+                            neg: next_neg,
+                            binary_node: None
+                        });
+                    } else {
+                        let prev = stack.pop().unwrap();
+                        if let Some(top) = stack.last_mut() {
+                            if let Some(binary_node) = prev.binary_node {
+                                top.binary_node = Some(binary_node);
+                            }
+                        }
+                    }
+                } else {
+                    stack.pop();
+                }
             }
         }
         
