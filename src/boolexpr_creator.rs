@@ -206,13 +206,12 @@ where
         // key - index of node
         // value - (occurrences, touch first clause)
         let mut occur_map = vec![(0, false); self.nodes.len()];
-        let mut binary_map = vec![(0, false); self.nodes.len()];
+        let mut binary_map = vec![0; self.nodes.len()];
         
         #[derive(Clone, Copy)]
         struct OccurEntry {
             node_index: usize,
             path: usize,
-            neg: bool,
             binary_node: Option<usize>,  //
         }
         impl OccurEntry {
@@ -221,7 +220,6 @@ where
                 Self {
                     node_index: start,
                     path: 0,
-                    neg: false,
                     binary_node: None
                 }
             }
@@ -245,14 +243,9 @@ where
                     if first_path {
                         visited[node_index] = true;
                     }
-                    let (next_neg, neg) = if node.is_negated() {
-                        (!top.neg, !top.neg)
-                    } else {
-                        (false, top.neg)
-                    };
                     if first_path {
                         if node.is_negated() {
-                            binary_map[node_index] = (top.binary_node.unwrap(), neg);
+                            binary_map[node_index] = top.binary_node.unwrap();
                         }
                         top.binary_node = if !node.is_unary() {
                             Some(node_index)
@@ -263,7 +256,6 @@ where
                         stack.push(OccurEntry {
                             node_index: node.first_path(),
                             path: 0,
-                            neg: next_neg,
                             binary_node: None
                         });
                     } else if second_path {
@@ -271,7 +263,6 @@ where
                         stack.push(OccurEntry {
                             node_index: node.second_path(),
                             path: 0,
-                            neg: next_neg,
                             binary_node: None
                         });
                     } else {
@@ -290,8 +281,8 @@ where
                 } else {
                     if !node.is_unary() {
                         occur_map[node_index].0 += 1;
-                    } else if binary_map[node_index].0 != 0 {
-                        occur_map[binary_map[node_index].0].0 += 1;
+                    } else if binary_map[node_index] != 0 {
+                        occur_map[binary_map[node_index]].0 += 1;
                     }
                     stack.pop();
                 }
