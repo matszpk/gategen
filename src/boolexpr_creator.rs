@@ -275,14 +275,24 @@ where
                             binary_node: None
                         });
                     } else {
+                        if !node.is_unary() {
+                            occur_map[node_index].0 += 1;
+                        }
                         let prev = stack.pop().unwrap();
                         if let Some(top) = stack.last_mut() {
-                            if let Some(binary_node) = prev.binary_node {
-                                top.binary_node = Some(binary_node);
+                            if self.nodes[top.node_index].is_negated() {
+                                if let Some(binary_node) = prev.binary_node {
+                                    top.binary_node = Some(binary_node);
+                                }
                             }
                         }
                     }
                 } else {
+                    if !node.is_unary() {
+                        occur_map[node_index].0 += 1;
+                    } else if binary_map[node_index].0 != 0 {
+                        occur_map[binary_map[node_index].0].0 += 1;
+                    }
                     stack.pop();
                 }
             }
