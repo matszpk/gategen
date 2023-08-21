@@ -18,7 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::io::Write;
 use std::ops::Neg;
@@ -192,12 +192,14 @@ where
             Literal(usize, bool),   // single literal
             Clause(usize, bool),    // other clause
         }
-        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
         enum ClauseType {
+            #[default]
+            Undefined,
             AndOr,  // conjuction or disjunction depend from positive or negative connection
             XorEq,    // xor or eqaulity depend from positive or negative connection
         }
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Clone, Debug, Default, PartialEq, Eq)]
         struct Clause {
             ctype: ClauseType,
             literals: Vec<ClauseLit>,    // it can be same literals or other clauses
@@ -280,11 +282,60 @@ where
         }
         
         // divide into clauses
+        
+        #[derive(Clone, Copy)]
+        struct ClauseEntry {
+            node_index: usize,
+            clause_index: usize,
+        }
+        impl ClauseEntry {
+            #[inline]
+            fn new(start: usize, clause_index: usize) -> Self {
+                Self {
+                    node_index: start,
+                    clause_index,
+                }
+            }
+        }
+        
+        #[derive(Clone, Copy)]
+        struct StackEntry {
+            node_index: usize,
+            path: usize,
+            binary_node: Option<usize>,  //
+            neg: bool,
+        }
+        impl StackEntry {
+            #[inline]
+            fn new(start: usize) -> Self {
+                Self {
+                    node_index: start,
+                    path: 0,
+                    binary_node: None,
+                    neg: false
+                }
+            }
+        }
+        
         visited.fill(false);
+        let mut clause_queue = VecDeque::<ClauseEntry>::new();
+        let mut clauses: Vec<Clause> = vec![];
+        let mut output_clauses: Vec<usize> = vec![];
         for start in &outputs {
             if *start == 0 || *start == 1 {
                 // skip single values
                 continue;
+            }
+            if visited[*start] {
+                continue;
+            }
+            clause_queue.push_back(ClauseEntry::new(*start, clauses.len()));
+            clauses.push(Clause::default());
+            while let Some(clause_entry) = clause_queue.pop_front() {
+                let clause = clauses.get_mut(clause_entry.clause_index).unwrap();
+                let mut stack = vec![StackEntry::new(clause_entry.node_index)];
+                // while !stack.is_empty() {
+                // }
             }
         }
         
@@ -343,7 +394,7 @@ where
                 let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
-                    if first_path {
+                    if first_path || node.is_single() {
                         visited[node_index] = true;
                     }
                     match node {
@@ -498,7 +549,7 @@ where
                 };
 
                 if !first_path || !visited[node_index] {
-                    if first_path {
+                    if first_path || node.is_single() {
                         visited[node_index] = true;
                     }
                     if first_path {
