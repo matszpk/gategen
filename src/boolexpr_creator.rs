@@ -178,26 +178,23 @@ where
     new_xxx!(new_xor, Xor);
     new_xxx!(new_equal, Equal);
     new_xxx!(new_impl, Impl);
-    
+
     pub fn optimize_clauses(
         &self,
         outputs: impl IntoIterator<Item = usize>,
-    ) -> (
-        Rc<RefCell<Self>>,
-        Vec<usize>
-    ) {
+    ) -> (Rc<RefCell<Self>>, Vec<usize>) {
         let outputs = Vec::from_iter(outputs);
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         enum ClauseLit<T> {
-            Literal(T, bool),   // single literal
-            Clause(usize, bool),    // other clause
-            Node(usize, bool),  // node
+            Literal(T, bool),    // single literal
+            Clause(usize, bool), // other clause
+            Node(usize, bool),   // node
         }
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         enum ClauseType {
             Undefined,
-            AndOr,  // conjuction or disjunction depend from positive or negative connection
-            XorEq,    // xor or eqaulity depend from positive or negative connection
+            AndOr, // conjuction or disjunction depend from positive or negative connection
+            XorEq, // xor or eqaulity depend from positive or negative connection
         }
         #[derive(Clone, Debug, Default, PartialEq, Eq)]
         enum Clause<T> {
@@ -205,21 +202,22 @@ where
             Undefined,
             Value(bool),
             Clause {
+                sign: bool,
                 ctype: ClauseType,
-                literals: Vec<ClauseLit<T>>,    // it can be same literals or other clauses
-            }
-        };
-        
+                literals: Vec<ClauseLit<T>>, // it can be same literals or other clauses
+            },
+        }
+
         // key - index of node
         // value - (occurrences, touch first clause)
         let mut occur_map = vec![(0, false); self.nodes.len()];
         let mut binary_map = vec![0; self.nodes.len()];
-        
+
         #[derive(Clone, Copy)]
         struct OccurEntry {
             node_index: usize,
             path: usize,
-            binary_node: Option<usize>,  //
+            binary_node: Option<usize>, //
         }
         impl OccurEntry {
             #[inline]
@@ -227,11 +225,11 @@ where
                 Self {
                     node_index: start,
                     path: 0,
-                    binary_node: None
+                    binary_node: None,
                 }
             }
         }
-        
+
         let mut visited = vec![false; self.nodes.len()];
         // collecting occurrences of nodes
         for start in &outputs {
@@ -269,7 +267,7 @@ where
                                     top.binary_node = Some(binary_node);
                                     binary_map[top.node_index] = binary_node;
                                 } else if !node.is_unary() {
-                                    top.binary_node = Some(node_index);   // previous node index
+                                    top.binary_node = Some(node_index); // previous node index
                                     binary_map[top.node_index] = node_index;
                                 }
                             }
@@ -285,9 +283,9 @@ where
                 }
             }
         }
-        
+
         // divide into clauses
-        
+
         #[derive(Clone, Copy)]
         struct ClauseEntry {
             node_index: usize,
@@ -302,7 +300,7 @@ where
                 }
             }
         }
-        
+
         #[derive(Clone, Copy)]
         struct StackEntry {
             node_index: usize,
@@ -315,11 +313,11 @@ where
                 Self {
                     node_index: start,
                     path: 0,
-                    neg: false
+                    neg: false,
                 }
             }
         }
-        
+
         visited.fill(false);
         let mut clause_queue = VecDeque::<ClauseEntry>::new();
         let mut clauses: Vec<Clause<T>> = vec![];
@@ -330,7 +328,7 @@ where
                 // skip single values
                 continue;
             }
-            
+
             let (start, neg) = {
                 let mut node_index = *start;
                 let mut neg = false;
@@ -340,7 +338,7 @@ where
                 }
                 (node_index, neg)
             };
-            
+
             if visited[start] {
                 continue;
             }
@@ -360,58 +358,93 @@ where
                         if first_path || node.is_single() {
                             visited[node_index] = true;
                         }
-                        
+
                         if matches!(clause, Clause::Undefined) {
                             *clause = match node {
                                 Node::Single(l) => {
                                     if let Some(v) = l.varlit() {
-                                        // fix output clases
-                                        Clause::Clause{
+                                        Clause::Clause {
+                                            sign: false,
                                             ctype: ClauseType::AndOr,
                                             literals: vec![ClauseLit::Literal(
                                                 v.positive().unwrap(),
-                                                !v.is_positive()
-                                            )]
+                                                !v.is_positive(),
+                                            )],
                                         }
                                     } else if let Some(v) = l.value() {
                                         Clause::Value(v)
                                     } else {
                                         panic!("Unsupported!");
                                     }
-                                },
+                                }
                                 Node::Negated(_) => {
                                     panic!("Unsupported!");
-                                },
+                                }
                                 Node::And(_, _) | Node::Or(_, _) | Node::Impl(_, _) => {
-                                    if !matches!(node, Node::And(_, _)) {
-                                        // fix sign for or and impl (Or clause).
-                                        let co = output_clauses.last_mut().unwrap();
-                                        *co = (co.0, !co.1);
-                                    }
-                                    Clause::Clause{
+                                    Clause::Clause {
+                                        sign: !matches!(node, Node::And(_, _)),
                                         ctype: ClauseType::AndOr,
                                         literals: vec![],
                                     }
+                                }
+                                Node::Xor(_, _) | Node::Equal(_, _) => Clause::Clause {
+                                    sign: matches!(node, Node::Equal(_, _)),
+                                    ctype: ClauseType::XorEq,
+                                    literals: vec![],
                                 },
+                            };
+                        }
+
+                        if first_path {
+                            let do_forward = match node {
+                                Node::Single(l) => false,
+                                Node::Negated(n) => true,
+                                Node::And(_, _) => {
+                                    if let Clause::Clause { sign, ctype, .. } = clause {
+                                        (top.neg == *sign) && *ctype == ClauseType::AndOr
+                                    } else {
+                                        false
+                                    }
+                                }
+                                Node::Or(_, _) | Node::Impl(_, _) => {
+                                    if let Clause::Clause { sign, ctype, .. } = clause {
+                                        (top.neg != *sign) && *ctype == ClauseType::AndOr
+                                    } else {
+                                        false
+                                    }
+                                }
                                 Node::Xor(_, _) | Node::Equal(_, _) => {
-                                    Clause::Clause{
-                                        ctype: ClauseType::XorEq,
-                                        literals: vec![],
+                                    if let Clause::Clause { ctype, .. } = clause {
+                                        *ctype == ClauseType::XorEq
+                                    } else {
+                                        false
                                     }
                                 }
                             };
-                        }
-                        
-                        if first_path {
-                            top.path = 1;
-                            stack.push(StackEntry::new(node.first_path()));
+
+                            if do_forward {
+                                top.path = 1;
+                                stack.push(StackEntry::new(node.first_path()));
+                            } else {
+                                if let Clause::Clause { literals, .. } = clause {
+                                    literals.push(ClauseLit::Node(node_index, top.neg));
+                                }
+                                stack.pop();
+                            }
                         } else if second_path {
                             top.path = 2;
                             stack.push(StackEntry::new(node.second_path()));
                         } else {
-                            if !node.is_unary() {
-                                occur_map[node_index].0 += 1;
+                            if let Node::Single(l) = node {
+                                let l = l.varlit().unwrap();
+                                if let Clause::Clause { literals, .. } = clause {
+                                    literals.push(ClauseLit::Literal(
+                                        l.positive().unwrap(),
+                                        !l.is_positive(),
+                                    ));
+                                }
                             }
+
                             stack.pop();
                         }
                     } else {
@@ -420,11 +453,11 @@ where
                 }
             }
         }
-        
+
         // optimize clauses
-        
+
         // construct from clauses
-        
+
         (Self::new(), Vec::from_iter(outputs))
     }
 
