@@ -188,22 +188,27 @@ where
     ) {
         let outputs = Vec::from_iter(outputs);
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-        enum ClauseLit {
-            Literal(usize, bool),   // single literal
+        enum ClauseLit<T> {
+            Literal(T, bool),   // single literal
             Clause(usize, bool),    // other clause
+            Node(usize, bool),  // node
         }
-        #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         enum ClauseType {
-            #[default]
             Undefined,
             AndOr,  // conjuction or disjunction depend from positive or negative connection
             XorEq,    // xor or eqaulity depend from positive or negative connection
         }
         #[derive(Clone, Debug, Default, PartialEq, Eq)]
-        struct Clause {
-            ctype: ClauseType,
-            literals: Vec<ClauseLit>,    // it can be same literals or other clauses
-        }
+        enum Clause<T> {
+            #[default]
+            Undefined,
+            Value(bool),
+            Clause {
+                ctype: ClauseType,
+                literals: Vec<ClauseLit<T>>,    // it can be same literals or other clauses
+            }
+        };
         
         // key - index of node
         // value - (occurrences, touch first clause)
@@ -243,7 +248,7 @@ where
                 let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
-                    if first_path {
+                    if first_path || node.is_single() {
                         visited[node_index] = true;
                     }
                     if first_path {
@@ -302,7 +307,6 @@ where
         struct StackEntry {
             node_index: usize,
             path: usize,
-            binary_node: Option<usize>,  //
             neg: bool,
         }
         impl StackEntry {
@@ -311,7 +315,6 @@ where
                 Self {
                     node_index: start,
                     path: 0,
-                    binary_node: None,
                     neg: false
                 }
             }
@@ -319,23 +322,102 @@ where
         
         visited.fill(false);
         let mut clause_queue = VecDeque::<ClauseEntry>::new();
-        let mut clauses: Vec<Clause> = vec![];
-        let mut output_clauses: Vec<usize> = vec![];
+        let mut clauses: Vec<Clause<T>> = vec![];
+        // output_clauses: value: clause_index, sign of connection (positive or negative)
+        let mut output_clauses: Vec<(usize, bool)> = vec![];
         for start in &outputs {
             if *start == 0 || *start == 1 {
                 // skip single values
                 continue;
             }
-            if visited[*start] {
+            
+            let (start, neg) = {
+                let mut node_index = *start;
+                let mut neg = false;
+                while let Node::Negated(next) = self.nodes[node_index] {
+                    neg = !neg;
+                    node_index = next;
+                }
+                (node_index, neg)
+            };
+            
+            if visited[start] {
                 continue;
             }
-            clause_queue.push_back(ClauseEntry::new(*start, clauses.len()));
+            clause_queue.push_back(ClauseEntry::new(start, clauses.len()));
+            output_clauses.push((clauses.len(), neg));
             clauses.push(Clause::default());
             while let Some(clause_entry) = clause_queue.pop_front() {
                 let clause = clauses.get_mut(clause_entry.clause_index).unwrap();
                 let mut stack = vec![StackEntry::new(clause_entry.node_index)];
-                // while !stack.is_empty() {
-                // }
+                while !stack.is_empty() {
+                    let mut top = stack.last_mut().unwrap();
+                    let node_index = top.node_index;
+                    let node = self.nodes[top.node_index];
+                    let first_path = top.path == 0 && !node.is_single();
+                    let second_path = top.path == 1 && !node.is_unary();
+                    if !first_path || !visited[node_index] {
+                        if first_path || node.is_single() {
+                            visited[node_index] = true;
+                        }
+                        
+                        if matches!(clause, Clause::Undefined) {
+                            *clause = match node {
+                                Node::Single(l) => {
+                                    if let Some(v) = l.varlit() {
+                                        // fix output clases
+                                        Clause::Clause{
+                                            ctype: ClauseType::AndOr,
+                                            literals: vec![ClauseLit::Literal(
+                                                v.positive().unwrap(),
+                                                !v.is_positive()
+                                            )]
+                                        }
+                                    } else if let Some(v) = l.value() {
+                                        Clause::Value(v)
+                                    } else {
+                                        panic!("Unsupported!");
+                                    }
+                                },
+                                Node::Negated(_) => {
+                                    panic!("Unsupported!");
+                                },
+                                Node::And(_, _) | Node::Or(_, _) | Node::Impl(_, _) => {
+                                    if !matches!(node, Node::And(_, _)) {
+                                        // fix sign for or and impl (Or clause).
+                                        let co = output_clauses.last_mut().unwrap();
+                                        *co = (co.0, !co.1);
+                                    }
+                                    Clause::Clause{
+                                        ctype: ClauseType::AndOr,
+                                        literals: vec![],
+                                    }
+                                },
+                                Node::Xor(_, _) | Node::Equal(_, _) => {
+                                    Clause::Clause{
+                                        ctype: ClauseType::XorEq,
+                                        literals: vec![],
+                                    }
+                                }
+                            };
+                        }
+                        
+                        if first_path {
+                            top.path = 1;
+                            stack.push(StackEntry::new(node.first_path()));
+                        } else if second_path {
+                            top.path = 2;
+                            stack.push(StackEntry::new(node.second_path()));
+                        } else {
+                            if !node.is_unary() {
+                                occur_map[node_index].0 += 1;
+                            }
+                            stack.pop();
+                        }
+                    } else {
+                        stack.pop();
+                    }
+                }
             }
         }
         
