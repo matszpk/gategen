@@ -216,7 +216,7 @@ where
         }
         impl OccurEntry {
             #[inline]
-            fn new_root(start: usize) -> Self {
+            fn new(start: usize) -> Self {
                 Self {
                     node_index: start,
                     path: 0,
@@ -232,7 +232,7 @@ where
                 // skip single values
                 continue;
             }
-            let mut stack = vec![OccurEntry::new_root(*start)];
+            let mut stack = vec![OccurEntry::new(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
@@ -246,23 +246,15 @@ where
                     }
                     if first_path {
                         top.path = 1;
-                        stack.push(OccurEntry {
-                            node_index: node.first_path(),
-                            path: 0,
-                            binary_node: None
-                        });
+                        stack.push(OccurEntry::new(node.first_path()));
                     } else if second_path {
                         top.path = 2;
-                        stack.push(OccurEntry {
-                            node_index: node.second_path(),
-                            path: 0,
-                            binary_node: None
-                        });
+                        stack.push(OccurEntry::new(node.second_path()));
                     } else {
                         if !node.is_unary() {
                             occur_map[node_index].0 += 1;
                         }
-                        let prev = stack.pop().unwrap();
+                        stack.pop();
                         if let Some(top) = stack.last_mut() {
                             if self.nodes[top.node_index].is_negated() {
                                 // update binary node
@@ -288,6 +280,7 @@ where
         }
         
         // divide into clauses
+        visited.fill(false);
         for start in &outputs {
             if *start == 0 || *start == 1 {
                 // skip single values
@@ -328,7 +321,7 @@ where
         }
         impl SimpleEntry {
             #[inline]
-            fn new_root(start: usize) -> Self {
+            fn new(start: usize) -> Self {
                 Self {
                     node_index: start,
                     path: 0,
@@ -342,7 +335,7 @@ where
                 // skip single values
                 continue;
             }
-            let mut stack = vec![SimpleEntry::new_root(*start)];
+            let mut stack = vec![SimpleEntry::new(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
@@ -371,16 +364,10 @@ where
                     }
                     if first_path {
                         top.path = 1;
-                        stack.push(SimpleEntry {
-                            node_index: node.first_path(),
-                            path: 0,
-                        });
+                        stack.push(SimpleEntry::new(node.first_path()));
                     } else if second_path {
                         top.path = 2;
-                        stack.push(SimpleEntry {
-                            node_index: node.second_path(),
-                            path: 0,
-                        });
+                        stack.push(SimpleEntry::new(node.second_path()));
                     } else {
                         stack.pop();
                     }
@@ -391,7 +378,7 @@ where
         }
 
         // create circuit
-        let mut visited = vec![false; self.nodes.len()];
+        visited.fill(false);
         let mut gate_output_map = HashMap::<usize, (Unsigned<T>, bool)>::new();
         let input_len = input_map.len();
         let mut gates = vec![];
@@ -401,7 +388,7 @@ where
                 // skip single values
                 continue;
             }
-            let mut stack = vec![SimpleEntry::new_root(*start)];
+            let mut stack = vec![SimpleEntry::new(*start)];
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
@@ -516,16 +503,10 @@ where
                     }
                     if first_path {
                         top.path = 1;
-                        stack.push(SimpleEntry {
-                            node_index: node.first_path(),
-                            path: 0,
-                        });
+                        stack.push(SimpleEntry::new(node.first_path()));
                     } else if second_path {
                         top.path = 2;
-                        stack.push(SimpleEntry {
-                            node_index: node.second_path(),
-                            path: 0,
-                        });
+                        stack.push(SimpleEntry::new(node.second_path()));
                     } else {
                         new_node();
                         stack.pop();
