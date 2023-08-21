@@ -236,6 +236,7 @@ where
             while !stack.is_empty() {
                 let mut top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
+                let binary_node = top.binary_node;
                 let node = self.nodes[top.node_index];
                 let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
@@ -244,14 +245,6 @@ where
                         visited[node_index] = true;
                     }
                     if first_path {
-                        if node.is_negated() {
-                            binary_map[node_index] = top.binary_node.unwrap();
-                        }
-                        top.binary_node = if !node.is_unary() {
-                            Some(node_index)
-                        } else {
-                            None
-                        };
                         top.path = 1;
                         stack.push(OccurEntry {
                             node_index: node.first_path(),
@@ -272,8 +265,13 @@ where
                         let prev = stack.pop().unwrap();
                         if let Some(top) = stack.last_mut() {
                             if self.nodes[top.node_index].is_negated() {
-                                if let Some(binary_node) = prev.binary_node {
+                                // update binary node
+                                if let Some(binary_node) = binary_node {
                                     top.binary_node = Some(binary_node);
+                                    binary_map[top.node_index] = binary_node;
+                                } else if !node.is_unary() {
+                                    top.binary_node = Some(node_index);   // previous node index
+                                    binary_map[top.node_index] = node_index;
                                 }
                             }
                         }
