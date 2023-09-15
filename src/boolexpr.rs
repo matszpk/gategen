@@ -20,7 +20,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::io::Write;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use std::rc::Rc;
 
@@ -28,7 +27,7 @@ use crate::boolexpr_creator::Node;
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 
 use crate::gate::{Literal, VarLit};
-use gatesim::{Circuit, Gate, GateFunc};
+use gatesim::{Circuit, GateFunc};
 
 /// Equality operator for boolean expressions and boolean words.
 ///
@@ -867,6 +866,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gatesim::Gate;
 
     #[test]
     fn test_expr_node_varlit() {
@@ -1510,7 +1510,6 @@ mod tests {
         let v3 = BoolExprNode::single_value(ec.clone(), false);
         use crate::intexpr::IntExprNode;
         use generic_array::typenum::*;
-        use generic_array::*;
         let outs = IntExprNode::<_, U2, false>::from_boolexprs(BoolExprNode::from_circuit(
             circuit,
             [v1.clone(), v2.clone(), v3.clone()],

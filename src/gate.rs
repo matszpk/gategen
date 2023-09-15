@@ -19,37 +19,9 @@
 
 use std::collections::*;
 use std::fmt::Debug;
-use std::io::{self, Write};
-use std::iter::Extend;
-use std::ops::{Index, IndexMut, Neg, Not};
+use std::ops::{Neg, Not};
 
 use generic_array::*;
-
-#[derive(thiserror::Error, Debug)]
-/// An error type.
-pub enum CNFError {
-    /// It caused if header has already been written.
-    #[error("Header has already been written")]
-    HeaderAlreadyWritten,
-    /// It caused if header has not been written.
-    #[error("Header has not been written")]
-    HeaderNotWritten,
-    /// It caused if attempt to write quantifier after clauses.
-    #[error("Quantifier after clauses")]
-    QuantifierAfterClauses,
-    /// It caused if attempt to write this same type of quantifier as previously.
-    #[error("Quantifier's duplicate")]
-    QuantifierDuplicate,
-    /// It caused after write all clauses.
-    #[error("Too many clauses to write")]
-    TooManyClauses,
-    /// It caused if clause have variable literal out of range.
-    #[error("Variable literal is out of range")]
-    VarLitOutOfRange,
-    /// It caused if I/O error encountered.
-    #[error("IO error: {0}")]
-    IOError(#[from] io::Error),
-}
 
 /// A variable literal. It holds variable number if it is not negated,
 /// or negated variable number if it is negated.
@@ -279,6 +251,52 @@ where
 {
     fn clause_len(&self) -> usize {
         self.len()
+    }
+
+    fn clause_all<F: FnMut(&T) -> bool>(&self, f: F) -> bool {
+        self.iter().all(f)
+    }
+
+    fn clause_for_each<F: FnMut(&T)>(&self, f: F) {
+        self.iter().for_each(f);
+    }
+}
+
+impl_clause!([T]);
+impl_clause!(Vec<T>);
+impl_clause!(VecDeque<T>);
+impl_clause!(BTreeSet<T>);
+impl_clause!(BinaryHeap<T>);
+impl_clause!(HashSet<T>);
+impl_clause!(LinkedList<T>);
+
+/// An implementation for an array.
+impl<T, const N: usize> Clause<T> for [T; N]
+where
+    T: VarLit + Neg<Output = T>,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    fn clause_len(&self) -> usize {
+        N
+    }
+
+    fn clause_all<F: FnMut(&T) -> bool>(&self, f: F) -> bool {
+        self.iter().all(f)
+    }
+
+    fn clause_for_each<F: FnMut(&T)>(&self, f: F) {
+        self.iter().for_each(f);
+    }
+}
+
+/// An implementation for a generic-array.
+impl<T, N: ArrayLength<T>> Clause<T> for GenericArray<T, N>
+where
+    T: VarLit + Neg<Output = T>,
+    <T as TryInto<usize>>::Error: Debug,
+{
+    fn clause_len(&self) -> usize {
+        N::USIZE
     }
 
     fn clause_all<F: FnMut(&T) -> bool>(&self, f: F) -> bool {
