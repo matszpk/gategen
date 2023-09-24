@@ -497,7 +497,7 @@ where
             }
             let mut stack = vec![SimpleEntry::new(*start)];
             while !stack.is_empty() {
-                let mut top = stack.last_mut().unwrap();
+                let top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
                 let node = self.nodes[top.node_index];
                 let first_path = top.path == 0 && !node.is_single();
@@ -550,7 +550,7 @@ where
             }
             let mut stack = vec![SimpleEntry::new(*start)];
             while !stack.is_empty() {
-                let mut top = stack.last_mut().unwrap();
+                let top = stack.last_mut().unwrap();
                 let node_index = top.node_index;
                 let node = self.nodes[top.node_index];
                 let first_path = top.path == 0 && !node.is_single();
