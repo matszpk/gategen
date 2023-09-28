@@ -221,7 +221,7 @@ where
                 let first_path = top.path == 0 && !node.is_single();
                 let second_path = top.path == 1 && !node.is_unary();
                 if !first_path || !visited[node_index] {
-                    if first_path || node.is_single() {
+                    if first_path {
                         visited[node_index] = true;
                     }
                     match node {
@@ -376,7 +376,7 @@ where
                 };
 
                 if !first_path || !visited[node_index] {
-                    if first_path || node.is_single() {
+                    if first_path {
                         visited[node_index] = true;
                     }
                     if first_path {
