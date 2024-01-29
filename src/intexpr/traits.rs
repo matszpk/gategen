@@ -1,6 +1,6 @@
 // traits.rs - integer expression structures.
 //
-// cnfgen - Generate the DIMACS CNF formulae from operations
+// cnfgen - Generate the DIMACS CNF formula from operations
 // Copyright (C) 2022  Mateusz Szpakowski
 //
 // This library is free software; you can redistribute it and/or
@@ -546,9 +546,25 @@ macro_rules! impl_int_cond_neg_pty {
 
 impl_int_ipty!(impl_int_cond_neg_pty);
 
+/// Trait to rotate left.
+pub trait IntRol<Rhs = Self> {
+    type Output;
+
+    // Required method
+    fn rotate_left(self, rhs: Rhs) -> Self::Output;
+}
+
+/// Trait to rotate right.
+pub trait IntRor<Rhs = Self> {
+    type Output;
+
+    // Required method
+    fn rotate_right(self, rhs: Rhs) -> Self::Output;
+}
+
 /// Trait to left shift with condition.
 ///
-/// A `cond_shl` just returns result of modular multiplication and condition when
+/// A `cond_shl` just returns result of left shift and condition when
 /// no right argument is lower than number of bits of left argument.
 /// This condition should be used to force condition in boolean formulae:
 /// it can be done by adding condition to root of conjunction (ANDs).
@@ -563,7 +579,7 @@ pub trait IntCondShl<Rhs = Self> {
 
 /// Trait to right shift with condition.
 ///
-/// A `cond_shr` just returns result of modular multiplication and condition when
+/// A `cond_shr` just returns result of right shift and condition when
 /// no right argument is lower than number of bits of left argument.
 /// This condition should be used to force condition in boolean formulae:
 /// it can be done by adding condition to root of conjunction (ANDs).
@@ -1075,6 +1091,29 @@ macro_rules! impl_int_ord_ipty {
 
 impl_int_upty_ty1!(impl_int_ord_upty);
 impl_int_ipty_ty1!(impl_int_ord_ipty);
+
+/// Trait with extra operations.
+pub trait ExtraOps {
+    type Output;
+    type BoolOutput;
+
+    /// Returns the number of ones in the binary representation of `self`.
+    fn count_zeros(self) -> Self::Output;
+    /// Returns the number of zeros in the binary representation of `self`.
+    fn count_ones(self) -> Self::Output;
+    /// Returns the number of leading zeros in the binary representation of `self`.
+    fn leading_zeros(self) -> Self::Output;
+    /// Returns the number of leading ones in the binary representation of `self`.
+    fn leading_ones(self) -> Self::Output;
+    /// Returns the number of trailing zeros in the binary representation of `self`.
+    fn trailing_zeros(self) -> Self::Output;
+    /// Returns the number of trailing ones in the binary representation of `self`.
+    fn trailing_ones(self) -> Self::Output;
+    /// Returns true if and only if `self == 2^k` for some `k`.
+    fn is_power_of_two(self) -> Self::BoolOutput;
+    /// Reverses the order of bits in the integer.
+    fn reverse_bits(self) -> Self::Output;
+}
 
 #[cfg(test)]
 mod tests {

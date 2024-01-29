@@ -25,20 +25,22 @@ use std::rc::Rc;
 
 use generic_array::*;
 
-use crate::boolexpr::{half_adder, BoolEqual, BoolExprNode, BoolImpl};
+use crate::boolexpr::{bool_ite, half_adder, BoolEqual, BoolExprNode, BoolImpl};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::gate::{Literal, VarLit};
 use crate::int_utils::*;
 pub use crate::intexpr::{
-    BitVal, DivMod, FullMul, IntCondAdd, IntCondMul, IntCondNeg, IntCondShl, IntCondShr,
+    BitVal, DivMod, ExtraOps, FullMul, IntCondAdd, IntCondMul, IntCondNeg, IntCondShl, IntCondShr,
     IntCondSub, IntEqual, IntError, IntExprNode, IntModAdd, IntModAddAssign, IntModMul,
-    IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd,
+    IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd, IntRol, IntRor,
 };
 use crate::{impl_int_ipty, impl_int_upty};
 use gatesim::Circuit;
 
 pub mod arith;
 pub use arith::*;
+pub mod extra_arith;
+pub use extra_arith::*;
 
 /// The main structure that represents dynamic integer expression, subexpression or integer value.
 ///

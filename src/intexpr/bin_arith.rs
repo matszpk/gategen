@@ -1,6 +1,6 @@
 // bin_arith.rs - integer expression structures.
 //
-// cnfgen - Generate the DIMACS CNF formulae from operations
+// cnfgen - Generate the DIMACS CNF formula from operations
 // Copyright (C) 2022  Mateusz Szpakowski
 //
 // This library is free software; you can redistribute it and/or
@@ -682,6 +682,152 @@ macro_rules! impl_int_shx_assign {
 
 impl_int_shx_assign!(ShlAssign, shl, shl_assign, impl_int_shl_assign_imm);
 impl_int_shx_assign!(ShrAssign, shr, shr_assign, impl_int_shr_assign_imm);
+
+// Rotate left implementation
+impl<T, N, N2, const SIGN: bool, const SIGN2: bool> IntRol<IntExprNode<T, N2, SIGN2>>
+    for IntExprNode<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    N2: ArrayLength<usize>,
+{
+    type Output = Self;
+
+    fn rotate_left(self, rhs: IntExprNode<T, N2, SIGN2>) -> Self::Output {
+        let nbits = Self::LOG_BITS;
+        // check whether zeroes in sign and in unused bits in Rhs
+        if (SIGN2 && *rhs.indexes.last().unwrap() != 0)
+            || !rhs.indexes.iter().skip(nbits).all(|x| *x == 0)
+            || ((1 << nbits) != N::USIZE && rhs.indexes[nbits - 1] != 0)
+        {
+            panic!("this arithmetic operation will overflow");
+        }
+        let nbits = cmp::min(nbits, N2::USIZE - usize::from(SIGN2));
+
+        let mut input = IntExprNode {
+            creator: self.creator.clone(),
+            indexes: GenericArray::default(),
+        };
+        let mut output = self;
+        for i in 0..nbits {
+            std::mem::swap(&mut input, &mut output);
+            iter_rotate_left(&mut output.indexes, &input, rhs.bit(i), i);
+        }
+        output
+    }
+}
+
+macro_rules! impl_int_rol_imm {
+    ($ty:ty) => {
+        impl<T, N, const SIGN: bool> IntRol<$ty> for IntExprNode<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = Self;
+
+            fn rotate_left(self, rhs: $ty) -> Self::Output {
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= N::USIZE {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                let mut output = GenericArray::default();
+                output[usize_rhs..].copy_from_slice(&self.indexes[0..(N::USIZE - usize_rhs)]);
+                output[..usize_rhs].copy_from_slice(&self.indexes[(N::USIZE - usize_rhs)..]);
+                IntExprNode {
+                    creator: self.creator,
+                    indexes: output,
+                }
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_rol_imm);
+impl_int_ipty!(impl_int_rol_imm);
+
+/// Rotate right implementation.
+impl<T, N, const SIGN: bool, N2, const SIGN2: bool> IntRor<IntExprNode<T, N2, SIGN2>>
+    for IntExprNode<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    N2: ArrayLength<usize>,
+{
+    type Output = Self;
+
+    fn rotate_right(self, rhs: IntExprNode<T, N2, SIGN2>) -> Self::Output {
+        let nbits = Self::LOG_BITS;
+        // check whether zeroes in sign and in unused bits in Rhs
+        if (SIGN2 && *rhs.indexes.last().unwrap() != 0)
+            || !rhs.indexes.iter().skip(nbits).all(|x| *x == 0)
+            || ((1 << nbits) != N::USIZE && rhs.indexes[nbits - 1] != 0)
+        {
+            panic!("this arithmetic operation will overflow");
+        }
+        let nbits = cmp::min(nbits, N2::USIZE - usize::from(SIGN2));
+
+        let mut input = IntExprNode {
+            creator: self.creator.clone(),
+            indexes: GenericArray::default(),
+        };
+        let mut output = self;
+        for i in 0..nbits {
+            std::mem::swap(&mut input, &mut output);
+            iter_rotate_right(&mut output.indexes, &input, rhs.bit(i), i);
+        }
+        output
+    }
+}
+
+macro_rules! impl_int_ror_imm {
+    ($ty:ty) => {
+        impl<T, N, const SIGN: bool> IntRor<$ty> for IntExprNode<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = Self;
+
+            fn rotate_right(self, rhs: $ty) -> Self::Output {
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= N::USIZE {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                let mut output = GenericArray::default();
+                output[0..(N::USIZE - usize_rhs)].copy_from_slice(&self.indexes[usize_rhs..]);
+                output[(N::USIZE - usize_rhs)..].copy_from_slice(&self.indexes[..usize_rhs]);
+                IntExprNode {
+                    creator: self.creator,
+                    indexes: output,
+                }
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_ror_imm);
+impl_int_ipty!(impl_int_ror_imm);
 
 #[cfg(test)]
 mod tests {
@@ -1531,5 +1677,247 @@ mod tests {
         test_expr_node_cond_shr_imm_self!(true, U8, -61i8, false, U3);
         test_expr_node_cond_shr_imm_self!(false, U8, 137u8, true, U4);
         test_expr_node_cond_shr_imm_self!(true, U8, -61i8, true, U4);
+    }
+
+    fn rotate_left_bits(
+        bits: usize,
+        bvs: &[BoolExprNode<isize>],
+        cond: BoolExprNode<isize>,
+        shift: usize,
+    ) -> Vec<BoolExprNode<isize>> {
+        (0..bits)
+            .into_iter()
+            .map(|i| {
+                bool_ite(
+                    cond.clone(),
+                    if i >= shift {
+                        bvs[i - shift].clone()
+                    } else {
+                        bvs[bits + i - shift].clone()
+                    },
+                    bvs[i].clone(),
+                )
+            })
+            .collect::<Vec<_>>()
+    }
+
+    macro_rules! test_expr_node_rotate_left_3 {
+        ($sign:expr, $signrhs:expr, $ty:ty, $torhs:ty, $bits:expr) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let x2 = IntExprNode::<isize, $torhs, $signrhs>::from(
+                IntExprNode::<isize, U3, false>::variable(ec.clone()),
+            );
+            let res = x1.rotate_left(x2);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits + 3);
+            let stage1 = rotate_left_bits($bits, &bvs[0..$bits], bvs[$bits].clone(), 1);
+            let stage2 = rotate_left_bits($bits, &stage1[0..$bits], bvs[$bits + 1].clone(), 2);
+            let exp = rotate_left_bits($bits, &stage2[0..$bits], bvs[$bits + 2].clone(), 4)
+                .into_iter()
+                .map(|x| x.index)
+                .collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    macro_rules! test_expr_node_rotate_left_rhs_imm {
+        ($sign:expr, $ty:ty, $bits:expr, $shift:expr, $rhs_pty:ty) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let res = x1.rotate_left(($shift) as $rhs_pty);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits);
+            let f = |x: usize| {
+                if x >= $shift {
+                    bvs[x - $shift].clone()
+                } else {
+                    bvs[$bits + x - $shift].clone()
+                }
+                .index
+            };
+            let exp = (0..$bits).into_iter().map(|x| f(x)).collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    macro_rules! test_expr_node_rotate_left_5 {
+        ($sign:expr, $signrhs:expr, $ty:ty, $torhs:ty, $bits:expr) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let x2 = IntExprNode::<isize, $torhs, $signrhs>::from(
+                IntExprNode::<isize, U5, false>::variable(ec.clone()),
+            );
+            let res = x1.rotate_left(x2);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits + 5);
+            let stage1 = rotate_left_bits($bits, &bvs[0..$bits], bvs[$bits].clone(), 1);
+            let stage2 = rotate_left_bits($bits, &stage1[0..$bits], bvs[$bits + 1].clone(), 2);
+            let stage3 = rotate_left_bits($bits, &stage2[0..$bits], bvs[$bits + 2].clone(), 4);
+            let stage4 = rotate_left_bits($bits, &stage3[0..$bits], bvs[$bits + 3].clone(), 8);
+            let exp = rotate_left_bits($bits, &stage4[0..$bits], bvs[$bits + 4].clone(), 16)
+                .into_iter()
+                .map(|x| x.index)
+                .collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    #[test]
+    fn test_expr_node_rotate_left() {
+        test_expr_node_rotate_left_3!(false, false, U8, U3, 8);
+        test_expr_node_rotate_left_3!(false, false, U8, U5, 8);
+        test_expr_node_rotate_left_3!(true, false, U8, U3, 8);
+        test_expr_node_rotate_left_3!(true, false, U8, U5, 8);
+
+        test_expr_node_rotate_left_3!(false, true, U8, U4, 8);
+        test_expr_node_rotate_left_3!(true, true, U8, U4, 8);
+
+        test_expr_node_rotate_left_5!(false, false, U32, U5, 32);
+        test_expr_node_rotate_left_5!(false, false, U32, U8, 32);
+
+        test_expr_node_rotate_left_5!(true, false, U32, U5, 32);
+        test_expr_node_rotate_left_5!(true, false, U32, U8, 32);
+
+        test_expr_node_rotate_left_5!(false, true, U32, U6, 32);
+        test_expr_node_rotate_left_5!(true, true, U32, U6, 32);
+
+        // rhs is constant - immediate
+        test_expr_node_rotate_left_rhs_imm!(false, U8, 8, 5, u8);
+        test_expr_node_rotate_left_rhs_imm!(true, U8, 8, 5, u8);
+        test_expr_node_rotate_left_rhs_imm!(false, U8, 8, 5, i8);
+        test_expr_node_rotate_left_rhs_imm!(false, U8, 8, 5, u16);
+        test_expr_node_rotate_left_rhs_imm!(false, U32, 32, 19, u8);
+        test_expr_node_rotate_left_rhs_imm!(true, U32, 32, 19, u8);
+    }
+
+    fn rotate_right_bits(
+        bits: usize,
+        bvs: &[BoolExprNode<isize>],
+        cond: BoolExprNode<isize>,
+        shift: usize,
+    ) -> Vec<BoolExprNode<isize>> {
+        (0..bits)
+            .into_iter()
+            .map(|i| {
+                bool_ite(
+                    cond.clone(),
+                    if i + shift < bits {
+                        bvs[i + shift].clone()
+                    } else {
+                        bvs[i + shift - bits].clone()
+                    },
+                    bvs[i].clone(),
+                )
+            })
+            .collect::<Vec<_>>()
+    }
+
+    macro_rules! test_expr_node_rotate_right_3 {
+        ($sign:expr, $signrhs:expr, $ty:ty, $torhs:ty, $bits:expr) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let x2 = IntExprNode::<isize, $torhs, $signrhs>::from(
+                IntExprNode::<isize, U3, false>::variable(ec.clone()),
+            );
+            let res = x1.rotate_right(x2);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits + 3);
+            let stage1 = rotate_right_bits($bits, &bvs[0..$bits], bvs[$bits].clone(), 1);
+            let stage2 = rotate_right_bits($bits, &stage1[0..$bits], bvs[$bits + 1].clone(), 2);
+            let exp = rotate_right_bits($bits, &stage2[0..$bits], bvs[$bits + 2].clone(), 4)
+                .into_iter()
+                .map(|x| x.index)
+                .collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    macro_rules! test_expr_node_rotate_right_rhs_imm {
+        ($sign:expr, $ty:ty, $bits:expr, $shift:expr, $rhs_pty:ty) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let res = x1.rotate_right(($shift) as $rhs_pty);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits);
+            let f = |x: usize| {
+                if x + $shift < $bits {
+                    bvs[x + $shift].clone()
+                } else {
+                    bvs[x + $shift - $bits].clone()
+                }
+                .index
+            };
+            let exp = (0..$bits).into_iter().map(|x| f(x)).collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    macro_rules! test_expr_node_rotate_right_5 {
+        ($sign:expr, $signrhs:expr, $ty:ty, $torhs:ty, $bits:expr) => {
+            let ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, $ty, $sign>::variable(ec.clone());
+            let x2 = IntExprNode::<isize, $torhs, $signrhs>::from(
+                IntExprNode::<isize, U5, false>::variable(ec.clone()),
+            );
+            let res = x1.rotate_right(x2);
+
+            let exp_ec = ExprCreator::new();
+            let bvs = alloc_boolvars(exp_ec.clone(), $bits + 5);
+            let stage1 = rotate_right_bits($bits, &bvs[0..$bits], bvs[$bits].clone(), 1);
+            let stage2 = rotate_right_bits($bits, &stage1[0..$bits], bvs[$bits + 1].clone(), 2);
+            let stage3 = rotate_right_bits($bits, &stage2[0..$bits], bvs[$bits + 2].clone(), 4);
+            let stage4 = rotate_right_bits($bits, &stage3[0..$bits], bvs[$bits + 3].clone(), 8);
+            let exp = rotate_right_bits($bits, &stage4[0..$bits], bvs[$bits + 4].clone(), 16)
+                .into_iter()
+                .map(|x| x.index)
+                .collect::<Vec<_>>();
+
+            assert_eq!(exp.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        };
+    }
+
+    #[test]
+    fn test_expr_node_rotate_right() {
+        test_expr_node_rotate_right_3!(false, false, U8, U3, 8);
+        test_expr_node_rotate_right_3!(false, false, U8, U5, 8);
+        test_expr_node_rotate_right_3!(true, false, U8, U3, 8);
+        test_expr_node_rotate_right_3!(true, false, U8, U5, 8);
+
+        test_expr_node_rotate_right_3!(false, true, U8, U4, 8);
+        test_expr_node_rotate_right_3!(true, true, U8, U4, 8);
+
+        test_expr_node_rotate_right_5!(false, false, U32, U5, 32);
+        test_expr_node_rotate_right_5!(false, false, U32, U8, 32);
+
+        test_expr_node_rotate_right_5!(true, false, U32, U5, 32);
+        test_expr_node_rotate_right_5!(true, false, U32, U8, 32);
+
+        test_expr_node_rotate_right_5!(false, true, U32, U6, 32);
+        test_expr_node_rotate_right_5!(true, true, U32, U6, 32);
+
+        // rhs is constant - immediate
+        test_expr_node_rotate_right_rhs_imm!(false, U8, 8, 5, u8);
+        test_expr_node_rotate_right_rhs_imm!(true, U8, 8, 5, u8);
+        test_expr_node_rotate_right_rhs_imm!(false, U8, 8, 5, i8);
+        test_expr_node_rotate_right_rhs_imm!(false, U8, 8, 5, u16);
+        test_expr_node_rotate_right_rhs_imm!(false, U32, 32, 19, u8);
+        test_expr_node_rotate_right_rhs_imm!(true, U32, 32, 19, u8);
     }
 }

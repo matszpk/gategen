@@ -428,6 +428,155 @@ macro_rules! impl_dynint_shx_assign {
 impl_dynint_shx_assign!(ShlAssign, shl, shl_assign, impl_dynint_shl_assign_imm);
 impl_dynint_shx_assign!(ShrAssign, shr, shr_assign, impl_dynint_shr_assign_imm);
 
+// rotations
+
+// Implement rotate left
+// shift operations
+
+impl<T, const SIGN: bool, const SIGN2: bool> IntRol<DynIntExprNode<T, SIGN2>>
+    for DynIntExprNode<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = Self;
+
+    fn rotate_left(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
+        let n = self.indexes.len();
+        let n2 = rhs.indexes.len();
+        let nbits = calc_log_bits(n);
+        // check whether zeroes in sign and in unused bits in Rhs
+        if (SIGN2 && *rhs.indexes.last().unwrap() != 0)
+            || !rhs.indexes.iter().skip(nbits).all(|x| *x == 0)
+            || ((1 << nbits) != n && rhs.indexes[nbits - 1] != 0)
+        {
+            panic!("this arithmetic operation will overflow");
+        }
+        let nbits = cmp::min(nbits, n2 - usize::from(SIGN2));
+
+        let mut input = DynIntExprNode {
+            creator: self.creator.clone(),
+            indexes: vec![0; n],
+        };
+        let mut output = self;
+        for i in 0..nbits {
+            std::mem::swap(&mut input, &mut output);
+            iter_rotate_left(&mut output.indexes, &input, rhs.bit(i), i);
+        }
+        output
+    }
+}
+
+macro_rules! impl_dynint_rol_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> IntRol<$ty> for DynIntExprNode<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+
+            fn rotate_left(self, rhs: $ty) -> Self::Output {
+                // check whether zeroes
+                let n = self.indexes.len();
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                let mut output = vec![0; n];
+                output[usize_rhs..].copy_from_slice(&self.indexes[0..(n - usize_rhs)]);
+                output[..usize_rhs].copy_from_slice(&self.indexes[(n - usize_rhs)..]);
+                DynIntExprNode {
+                    creator: self.creator,
+                    indexes: output,
+                }
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_dynint_rol_imm);
+impl_int_ipty!(impl_dynint_rol_imm);
+
+impl<T, const SIGN: bool, const SIGN2: bool> IntRor<DynIntExprNode<T, SIGN2>>
+    for DynIntExprNode<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = Self;
+
+    fn rotate_right(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
+        let n = self.indexes.len();
+        let n2 = rhs.indexes.len();
+        let nbits = calc_log_bits(n);
+        // check whether zeroes in sign and in unused bits in Rhs
+        if (SIGN2 && *rhs.indexes.last().unwrap() != 0)
+            || !rhs.indexes.iter().skip(nbits).all(|x| *x == 0)
+            || ((1 << nbits) != n && rhs.indexes[nbits - 1] != 0)
+        {
+            panic!("this arithmetic operation will overflow");
+        }
+        let nbits = cmp::min(nbits, n2 - usize::from(SIGN2));
+
+        let mut input = DynIntExprNode {
+            creator: self.creator.clone(),
+            indexes: vec![0; n],
+        };
+        let mut output = self;
+        for i in 0..nbits {
+            std::mem::swap(&mut input, &mut output);
+            iter_rotate_right(&mut output.indexes, &input, rhs.bit(i), i);
+        }
+        output
+    }
+}
+
+macro_rules! impl_dynint_ror_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> IntRor<$ty> for DynIntExprNode<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+
+            fn rotate_right(self, rhs: $ty) -> Self::Output {
+                let n = self.indexes.len();
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                let mut output = vec![0; n];
+                output[0..(n - usize_rhs)].copy_from_slice(&self.indexes[usize_rhs..]);
+                output[(n - usize_rhs)..].copy_from_slice(&self.indexes[..usize_rhs]);
+                DynIntExprNode {
+                    creator: self.creator,
+                    indexes: output,
+                }
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_dynint_ror_imm);
+impl_int_ipty!(impl_dynint_ror_imm);
+
 /// Returns result of the If-Then-Else (ITE) - integer version.
 pub fn dynint_ite<T, const SIGN: bool>(
     c: BoolExprNode<T>,
@@ -489,6 +638,117 @@ where
     }
 
     ites.pop().unwrap()
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn dynint_booltable<T, I, const SIGN: bool>(
+    index: DynIntExprNode<T, SIGN>,
+    table_iter: I,
+) -> BoolExprNode<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = BoolExprNode<T>>,
+{
+    let mut ites = vec![];
+    let mut iter = table_iter.into_iter();
+    while let Some(v) = iter.next() {
+        if let Some(v2) = iter.next() {
+            ites.push(bool_ite(index.bit(0), v2, v));
+        } else {
+            panic!("Odd number of elements");
+        }
+    }
+
+    for step in 1..(index.len()) {
+        if (ites.len() & 1) != 0 {
+            panic!("Odd number of elements");
+        }
+        for i in 0..(ites.len() >> 1) {
+            ites[i] = bool_ite(
+                index.bit(step),
+                ites[(i << 1) + 1].clone(),
+                ites[i << 1].clone(),
+            );
+        }
+        ites.resize(
+            ites.len() >> 1,
+            BoolExprNode::single_value(index.creator.clone(), false),
+        );
+    }
+
+    ites.pop().unwrap()
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_demux<T, const SIGN: bool>(
+    index: DynIntExprNode<T, SIGN>,
+    value: DynIntExprNode<T, SIGN>,
+) -> Vec<DynIntExprNode<T, SIGN>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    let k = index.len();
+    let n = value.len();
+    assert_ne!(k, 0);
+    let mut chooser_table = vec![];
+    chooser_table.push(!index.bit(k - 1));
+    chooser_table.push(index.bit(k - 1));
+    for l in 1..k {
+        let mut new_chooser_table = Vec::with_capacity(1 << l);
+        for i in 0..1 << l {
+            new_chooser_table.push(chooser_table[i].clone() & !index.bit(k - l - 1));
+            new_chooser_table.push(chooser_table[i].clone() & index.bit(k - l - 1));
+        }
+        chooser_table = new_chooser_table;
+    }
+    (0..1 << k)
+        .map(|i| value.clone() & DynIntExprNode::filled_expr(n, chooser_table[i].clone()))
+        .collect::<Vec<_>>()
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_booldemux<T, const SIGN: bool>(
+    index: DynIntExprNode<T, SIGN>,
+    value: BoolExprNode<T>,
+) -> Vec<BoolExprNode<T>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    let k = index.len();
+    assert_ne!(k, 0);
+    let mut chooser_table = vec![];
+    chooser_table.push(!index.bit(k - 1));
+    chooser_table.push(index.bit(k - 1));
+    for l in 1..k {
+        let mut new_chooser_table = Vec::with_capacity(1 << l);
+        for i in 0..1 << l {
+            new_chooser_table.push(chooser_table[i].clone() & !index.bit(k - l - 1));
+            new_chooser_table.push(chooser_table[i].clone() & index.bit(k - l - 1));
+        }
+        chooser_table = new_chooser_table;
+    }
+    (0..1 << k)
+        .map(|i| value.clone() & chooser_table[i].clone())
+        .collect::<Vec<_>>()
 }
 
 // absolute value
@@ -1020,9 +1280,10 @@ impl_dynint_div_mod!(true);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::intexpr::{int_ite, int_table, IntExprNode};
+    use crate::intexpr::{
+        int_booldemux, int_booltable, int_demux, int_ite, int_table, IntExprNode,
+    };
     use generic_array::typenum::*;
-
     macro_rules! test_expr_node_binaryop {
         ($sign:expr, $op:ident, $op_assign:ident) => {
             let ec = ExprCreator::new();
@@ -1113,6 +1374,68 @@ mod tests {
         let exp = int_table(idx, values);
 
         assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+        assert_eq!(*exp_ec.borrow(), *ec.borrow());
+    }
+
+    #[test]
+    fn test_expr_node_dynint_booltable() {
+        let ec = ExprCreator::new();
+        let idx = DynIntExprNode::<isize, false>::variable(ec.clone(), 5);
+        let values = (0..(1 << 5))
+            .into_iter()
+            .map(|_| BoolExprNode::<isize>::variable(ec.clone()))
+            .collect::<Vec<_>>();
+        let res = dynint_booltable(idx, values);
+
+        let exp_ec = ExprCreator::new();
+        let idx = IntExprNode::<isize, U5, false>::variable(exp_ec.clone());
+        let values = (0..(1 << 5))
+            .into_iter()
+            .map(|_| BoolExprNode::<isize>::variable(exp_ec.clone()))
+            .collect::<Vec<_>>();
+        let exp = int_booltable(idx, values);
+
+        assert_eq!(exp.index, res.index);
+        assert_eq!(*exp_ec.borrow(), *ec.borrow());
+    }
+
+    #[test]
+    fn test_expr_node_dynint_demux() {
+        let ec = ExprCreator::new();
+        let idx = DynIntExprNode::<isize, false>::variable(ec.clone(), 5);
+        let value = DynIntExprNode::<isize, false>::variable(ec.clone(), 10);
+        let res = dynint_demux(idx, value);
+
+        let exp_ec = ExprCreator::new();
+        let idx = IntExprNode::<isize, U5, false>::variable(exp_ec.clone());
+        let value = IntExprNode::<isize, U10, false>::variable(exp_ec.clone());
+        let exp = int_demux(idx, value);
+
+        assert_eq!(
+            exp.into_iter()
+                .map(|x| x.indexes.into_iter().collect::<Vec<_>>())
+                .collect::<Vec<_>>(),
+            res.into_iter().map(|x| x.indexes).collect::<Vec<_>>()
+        );
+        assert_eq!(*exp_ec.borrow(), *ec.borrow());
+    }
+
+    #[test]
+    fn test_expr_node_dynint_booldemux() {
+        let ec = ExprCreator::new();
+        let idx = DynIntExprNode::<isize, false>::variable(ec.clone(), 5);
+        let value = BoolExprNode::<isize>::variable(ec.clone());
+        let res = dynint_booldemux(idx, value);
+
+        let exp_ec = ExprCreator::new();
+        let idx = IntExprNode::<isize, U5, false>::variable(exp_ec.clone());
+        let value = BoolExprNode::<isize>::variable(exp_ec.clone());
+        let exp = int_booldemux(idx, value);
+
+        assert_eq!(
+            exp.into_iter().map(|x| x.index).collect::<Vec<_>>(),
+            res.into_iter().map(|x| x.index).collect::<Vec<_>>()
+        );
         assert_eq!(*exp_ec.borrow(), *ec.borrow());
     }
 
@@ -1276,6 +1599,118 @@ mod tests {
     fn test_expr_node_shr() {
         test_expr_node_shiftop!(false, shr, shr_assign);
         test_expr_node_shiftop!(true, shr, shr_assign);
+    }
+
+    macro_rules! test_expr_node_rotateop {
+        ($sign:expr, $op:ident) => {{
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let x2 = DynIntExprNode::<isize, false>::variable(ec.clone(), 4);
+            let res = x1.$op(x2);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let x2 = IntExprNode::<isize, U4, false>::variable(exp_ec.clone());
+            let exp = x1.$op(x2);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }
+
+        {
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let x2 = DynIntExprNode::<isize, false>::variable(ec.clone(), 3);
+            let res = x1.$op(x2);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let x2 = IntExprNode::<isize, U3, false>::variable(exp_ec.clone());
+            let exp = x1.$op(x2);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }
+
+        {
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let x2 = DynIntExprNode::<isize, true>::try_from_n(
+                DynIntExprNode::<isize, false>::variable(ec.clone(), 4),
+                5,
+            )
+            .unwrap();
+            let res = x1.$op(x2);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let x2 = IntExprNode::<isize, U5, true>::from(
+                IntExprNode::<isize, U4, false>::variable(exp_ec.clone()),
+            );
+            let exp = x1.$op(x2);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }
+
+        {
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let x2 = DynIntExprNode::<isize, true>::try_from_n(
+                DynIntExprNode::<isize, false>::variable(ec.clone(), 3),
+                4,
+            )
+            .unwrap();
+            let res = x1.$op(x2);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let x2 = IntExprNode::<isize, U4, true>::from(
+                IntExprNode::<isize, U3, false>::variable(exp_ec.clone()),
+            );
+            let exp = x1.$op(x2);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }
+
+        {
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let res = x1.$op(11u8);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let exp = x1.$op(11u8);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }
+
+        {
+            let ec = ExprCreator::new();
+            let x1 = DynIntExprNode::<isize, $sign>::variable(ec.clone(), 16);
+            let res = x1.$op(11i8);
+
+            let exp_ec = ExprCreator::new();
+            let x1 = IntExprNode::<isize, U16, $sign>::variable(exp_ec.clone());
+            let exp = x1.$op(11i8);
+
+            assert_eq!(exp.indexes.as_slice(), res.indexes.as_slice());
+            assert_eq!(*exp_ec.borrow(), *ec.borrow());
+        }};
+    }
+
+    #[test]
+    fn test_expr_node_rotate_left() {
+        test_expr_node_rotateop!(false, rotate_left);
+        test_expr_node_rotateop!(true, rotate_left);
+    }
+
+    #[test]
+    fn test_expr_node_rotate_right() {
+        test_expr_node_rotateop!(false, rotate_right);
+        test_expr_node_rotateop!(true, rotate_right);
     }
 
     macro_rules! test_expr_node_cond_shl_5 {
