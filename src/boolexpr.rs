@@ -199,6 +199,23 @@ where
     }
 }
 
+/// Convert to input list.
+pub fn input_map_to_input_list<T, I>(
+    input_map: HashMap<T, <T as VarLit>::Unsigned>,
+    iter: I,
+) -> Vec<<T as VarLit>::Unsigned>
+where
+    T: VarLit + Neg<Output = T> + std::hash::Hash + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: Iterator<Item = BoolExprNode<T>>,
+{
+    iter.map(|b| input_map[&b.varlit().unwrap()])
+        .collect::<Vec<_>>()
+}
+
 /// An implementation Not for BoolExprNode.
 impl<T> Not for BoolExprNode<T>
 where
