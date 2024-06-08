@@ -241,6 +241,116 @@ where
     }
 }
 
+macro_rules! new_op_from_impl {
+    ($t:ident, $v:ident, $t2:ident) => {
+        impl<T> $t<$t2<T>> for BoolVar<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: $t2<T>) -> Self::Output {
+                Self(self.0.$v(rhs))
+            }
+        }
+        impl<T> $t<&$t2<T>> for BoolVar<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: &$t2<T>) -> Self::Output {
+                Self(self.0.$v(rhs.clone()))
+            }
+        }
+        impl<T> $t<$t2<T>> for &BoolVar<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: $t2<T>) -> Self::Output {
+                BoolVar::<T>(self.0.clone().$v(rhs))
+            }
+        }
+        impl<T> $t<&$t2<T>> for &BoolVar<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: &$t2<T>) -> Self::Output {
+                BoolVar::<T>(self.0.clone().$v(rhs.clone()))
+            }
+        }
+
+        impl<T> $t<BoolVar<T>> for $t2<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
+                BoolVar::<T>(self.$v(rhs.0))
+            }
+        }
+        impl<T> $t<&BoolVar<T>> for $t2<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
+                BoolVar::<T>(self.$v(rhs.0.clone()))
+            }
+        }
+        impl<T> $t<BoolVar<T>> for &$t2<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
+                BoolVar::<T>(self.clone().$v(rhs.0))
+            }
+        }
+        impl<T> $t<&BoolVar<T>> for &$t2<T>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
+                BoolVar::<T>(self.clone().$v(rhs.0.clone()))
+            }
+        }
+    };
+}
+
 macro_rules! new_op_impl {
     ($t:ident, $v:ident) => {
         impl<T> $t<BoolVar<T>> for BoolVar<T>
@@ -297,218 +407,8 @@ macro_rules! new_op_impl {
         }
 
         // for BoolExprNodes
-        impl<T> $t<BoolExprNode<T>> for BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolExprNode<T>) -> Self::Output {
-                Self(self.0.$v(rhs))
-            }
-        }
-        impl<T> $t<&BoolExprNode<T>> for BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolExprNode<T>) -> Self::Output {
-                Self(self.0.$v(rhs.clone()))
-            }
-        }
-        impl<T> $t<BoolExprNode<T>> for &BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolExprNode<T>) -> Self::Output {
-                BoolVar::<T>(self.0.clone().$v(rhs))
-            }
-        }
-        impl<T> $t<&BoolExprNode<T>> for &BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolExprNode<T>) -> Self::Output {
-                BoolVar::<T>(self.0.clone().$v(rhs.clone()))
-            }
-        }
-
-        impl<T> $t<BoolVar<T>> for BoolExprNode<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.$v(rhs.0))
-            }
-        }
-        impl<T> $t<&BoolVar<T>> for BoolExprNode<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.$v(rhs.0.clone()))
-            }
-        }
-        impl<T> $t<BoolVar<T>> for &BoolExprNode<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.clone().$v(rhs.0))
-            }
-        }
-        impl<T> $t<&BoolVar<T>> for &BoolExprNode<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.clone().$v(rhs.0.clone()))
-            }
-        }
-
-        // for literals
-        impl<T> $t<Literal<T>> for BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: Literal<T>) -> Self::Output {
-                Self(self.0.$v(rhs))
-            }
-        }
-        impl<T> $t<&Literal<T>> for BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &Literal<T>) -> Self::Output {
-                Self(self.0.$v(rhs.clone()))
-            }
-        }
-        impl<T> $t<Literal<T>> for &BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: Literal<T>) -> Self::Output {
-                BoolVar::<T>(self.0.clone().$v(rhs))
-            }
-        }
-        impl<T> $t<&Literal<T>> for &BoolVar<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &Literal<T>) -> Self::Output {
-                BoolVar::<T>(self.0.clone().$v(rhs.clone()))
-            }
-        }
-
-        impl<T> $t<BoolVar<T>> for Literal<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.$v(rhs.0))
-            }
-        }
-        impl<T> $t<&BoolVar<T>> for Literal<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.$v(rhs.0.clone()))
-            }
-        }
-        impl<T> $t<BoolVar<T>> for &Literal<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.clone().$v(rhs.0))
-            }
-        }
-        impl<T> $t<&BoolVar<T>> for &Literal<T>
-        where
-            T: VarLit + Neg<Output = T> + Debug,
-            isize: TryFrom<T>,
-            <T as TryInto<usize>>::Error: Debug,
-            <T as TryFrom<usize>>::Error: Debug,
-            <isize as TryFrom<T>>::Error: Debug,
-        {
-            type Output = BoolVar<T>;
-            fn $v(self, rhs: &BoolVar<T>) -> Self::Output {
-                BoolVar::<T>(self.clone().$v(rhs.0.clone()))
-            }
-        }
+        new_op_from_impl!($t, $v, BoolExprNode);
+        new_op_from_impl!($t, $v, Literal);
 
         // for booleans
         impl<T> $t<bool> for BoolVar<T>
