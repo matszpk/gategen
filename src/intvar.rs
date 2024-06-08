@@ -54,6 +54,142 @@ pub struct IntVar<T: VarLit + Debug, N: ArrayLength<usize>, const SIGN: bool>(
     IntExprNode<T, N, SIGN>,
 );
 
+impl<T, N: ArrayLength<usize>, const SIGN: bool> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    /// Number of BITS.
+    pub const BITS: usize = N::USIZE;
+    /// SIGN of integer. It can be false - unsigned, or true - signed.
+    pub const SIGN: bool = SIGN;
+    /// Internally used logarithm of number of bits.
+    pub const LOG_BITS: usize = IntExprNode::<T, N, SIGN>::LOG_BITS;
+}
+
+macro_rules! impl_create_var {
+    ($t:ident, $creator:ident) => {
+        impl<N: ArrayLength<usize>, const SIGN: bool> IntVar<$t, N, SIGN> {
+            pub fn var() -> Self {
+                $creator.with_borrow(|ec| {
+                    Self(IntExprNode::<$t, N, SIGN>::variable(ec.clone().unwrap()))
+                })
+            }
+        }
+    };
+}
+
+impl_create_var!(i32, EXPR_CREATOR_32);
+impl_create_var!(isize, EXPR_CREATOR_SYS);
+
+// TryFrom implementation
+macro_rules! impl_int_try_from {
+    ($ty1:ty, $ty2: ty, $($gparams:ident),*) => {
+        impl<T: VarLit, const SIGN2: bool, $( $gparams ),* >
+                TryFrom<IntVar<T, $ty2, SIGN2>> for IntVar<T, $ty1, false>
+        where
+            $ty1: ArrayLength<usize>,
+            $ty2: ArrayLength<usize>,
+        {
+            type Error = IntError;
+
+            fn try_from(v: IntVar<T, $ty2, SIGN2>) -> Result<Self, Self::Error> {
+                IntExprNode::<T, $ty1, false>::try_from(v.0).map(|x| Self(x))
+            }
+        }
+
+        impl<T: VarLit, $( $gparams ),* >
+                TryFrom<IntVar<T, $ty2, false>> for IntVar<T, $ty1, true>
+        where
+            $ty1: ArrayLength<usize>,
+            $ty2: ArrayLength<usize>,
+        {
+            type Error = IntError;
+
+            fn try_from(v: IntVar<T, $ty2, false>) -> Result<Self, Self::Error> {
+                IntExprNode::<T, $ty1, true>::try_from(v.0).map(|x| Self(x))
+            }
+        }
+
+        impl<T: VarLit, $( $gparams ),* >
+                TryFrom<IntVar<T, $ty2, true>> for IntVar<T, $ty1, true>
+        where
+            $ty1: ArrayLength<usize>,
+            $ty2: ArrayLength<usize>,
+        {
+            type Error = IntError;
+
+            fn try_from(v: IntVar<T, $ty2, true>) -> Result<Self, Self::Error> {
+                IntExprNode::<T, $ty1, true>::try_from(v.0).map(|x| Self(x))
+            }
+        }
+
+        // try from for rest
+        impl<T: VarLit, $( $gparams ),* >
+                TryFrom<IntVar<T, $ty1, true>> for IntVar<T, $ty2, false>
+        where
+            $ty1: ArrayLength<usize>,
+            $ty2: ArrayLength<usize>,
+        {
+            type Error = IntError;
+
+            fn try_from(v: IntVar<T, $ty1, true>) -> Result<Self, Self::Error> {
+                IntExprNode::<T, $ty2, false>::try_from(v.0).map(|x| Self(x))
+            }
+        }
+    }
+}
+
+impl_int_ty1_lt_ty2!(impl_int_try_from);
+
+impl<T: VarLit, N: ArrayLength<usize>> TryFrom<IntVar<T, N, false>> for IntVar<T, N, true> {
+    type Error = IntError;
+
+    fn try_from(v: IntVar<T, N, false>) -> Result<Self, Self::Error> {
+        IntExprNode::<T, N, true>::try_from(v.0).map(|x| Self(x))
+    }
+}
+
+impl<T: VarLit, N: ArrayLength<usize>> TryFrom<IntVar<T, N, true>> for IntVar<T, N, false> {
+    type Error = IntError;
+
+    fn try_from(v: IntVar<T, N, true>) -> Result<Self, Self::Error> {
+        IntExprNode::<T, N, false>::try_from(v.0).map(|x| Self(x))
+    }
+}
+
+// From implementation
+macro_rules! impl_int_from {
+    ($ty1:ty, $ty2: ty, $($gparams:ident),*) => {
+        impl<T: VarLit, const SIGN2: bool, $( $gparams ),* >
+                From<IntVar<T, $ty1, false>> for IntVar<T, $ty2, SIGN2>
+            where
+                $ty1: ArrayLength<usize>,
+                $ty2: ArrayLength<usize>, {
+            fn from(v: IntVar<T, $ty1, false>) -> Self {
+                Self(IntExprNode::<T, $ty2, SIGN2>::from(v.0))
+            }
+        }
+
+        impl<T: VarLit, $( $gparams ),* >
+                From<IntVar<T, $ty1, true>> for IntVar<T, $ty2, true>
+            where
+                $ty1: ArrayLength<usize>,
+                $ty2: ArrayLength<usize>, {
+            fn from(v: IntVar<T, $ty1, true>) -> Self {
+                Self(IntExprNode::<T, $ty2, true>::from(v.0))
+            }
+        }
+    }
+}
+
+impl_int_ty1_lt_ty2!(impl_int_from);
+
+// conversion from integers
+
 impl<T, N, const SIGN: bool> From<IntVar<T, N, SIGN>> for IntExprNode<T, N, SIGN>
 where
     T: VarLit + Debug,
