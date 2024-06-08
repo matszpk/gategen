@@ -23,11 +23,10 @@ use std::fmt::Debug;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use std::rc::Rc;
 
-use gatesim::Circuit;
-
 use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::gate::{Literal, VarLit};
+use gatesim::Circuit;
 
 #[derive(thiserror::Error, Debug)]
 pub enum BoolVarError {
