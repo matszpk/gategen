@@ -139,9 +139,9 @@ where
         self.0.to_circuit()
     }
 
-    pub fn from_circuit(
+    pub fn from_circuit<ITP: Into<BoolVar<T>>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
-        inputs: impl IntoIterator<Item = BoolVar<T>>,
+        inputs: impl IntoIterator<Item = ITP>,
     ) -> Option<Self>
     where
         <T as VarLit>::Unsigned:
@@ -151,7 +151,9 @@ where
     {
         IntExprNode::<T, N, SIGN>::from_boolexprs(BoolExprNode::<T>::from_circuit(
             circuit,
-            inputs.into_iter().map(|x| BoolExprNode::<T>::from(x)),
+            inputs
+                .into_iter()
+                .map(|x| BoolExprNode::<T>::from(x.into())),
         ))
         .map(|x| Self(x))
     }

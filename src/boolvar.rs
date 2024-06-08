@@ -196,16 +196,16 @@ where
         self.0.to_circuit()
     }
 
-    pub fn from_circuit(
+    pub fn from_circuit<ITP: Into<Self>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
-        inputs: impl IntoIterator<Item = Self>,
+        inputs: impl IntoIterator<Item = ITP>,
     ) -> Vec<Self>
     where
         <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
         usize: TryFrom<<T as VarLit>::Unsigned>,
         <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
     {
-        BoolExprNode::<T>::from_circuit(circuit, inputs.into_iter().map(|x| x.0))
+        BoolExprNode::<T>::from_circuit(circuit, inputs.into_iter().map(|x| x.into().0))
             .into_iter()
             .map(|x| Self(x))
             .collect::<Vec<_>>()
