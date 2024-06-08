@@ -39,8 +39,10 @@ pub enum BoolVarError {
 }
 
 thread_local! {
-    static EXPR_CREATOR_32: RefCell<Option<Rc<RefCell<ExprCreator32>>>> = RefCell::new(None);
-    static EXPR_CREATOR_SYS: RefCell<Option<Rc<RefCell<ExprCreatorSys>>>> = RefCell::new(None);
+    pub(crate) static EXPR_CREATOR_32: RefCell<Option<Rc<RefCell<ExprCreator32>>>> =
+        RefCell::new(None);
+    pub(crate) static EXPR_CREATOR_SYS: RefCell<Option<Rc<RefCell<ExprCreatorSys>>>> =
+        RefCell::new(None);
 }
 
 /// Call routine f that operates on expressions with new ExprCreator.

@@ -53,5 +53,6 @@ pub mod dynintexpr;
 mod int_utils;
 pub mod intexpr;
 mod intmacros;
+pub mod intvar;
 
 pub use generic_array;

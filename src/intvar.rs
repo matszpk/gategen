@@ -1,0 +1,672 @@
+// mod.rs - integer expression structures.
+//
+// cnfgen - Generate the DIMACS CNF formulae from operations
+// Copyright (C) 2022  Mateusz Szpakowski
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+use std::cell::RefCell;
+use std::cmp;
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::iter;
+use std::ops::{Add, BitAnd, BitOr, Neg, Not, Sub};
+use std::rc::Rc;
+
+use generic_array::typenum::*;
+use generic_array::*;
+
+use crate::boolexpr::{bool_ite, half_adder, BoolExprNode};
+pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
+pub use crate::boolvar::{call32, callsys};
+use crate::boolvar::{BoolVar, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
+use crate::dynintexpr::DynIntExprNode;
+use crate::gate::{Literal, VarLit};
+use crate::int_utils::*;
+use crate::intexpr::{IntError, IntExprNode};
+use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
+use crate::{impl_int_ipty, impl_int_ipty_ty1, impl_int_upty, impl_int_upty_ty1};
+use gatesim::Circuit;
+
+pub use crate::intexpr::bin_arith::*;
+pub use crate::intexpr::extra_arith::*;
+pub use crate::intexpr::int_arith::*;
+pub use crate::intexpr::traits::*;
+
+/// The main structure that represents integer expression, subexpression or integer value.
+/// It provides same operations as IntExprNode but they are easier to use
+/// thanks simpler and easier to use interface that allow references and implements
+/// standard arithmetic operators like addition, subtraction but with modular arithmetic rules.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IntVar<T: VarLit + Debug, N: ArrayLength<usize>, const SIGN: bool>(
+    IntExprNode<T, N, SIGN>,
+);
+
+impl<T, N, const SIGN: bool> From<IntVar<T, N, SIGN>> for IntExprNode<T, N, SIGN>
+where
+    T: VarLit + Debug,
+    N: ArrayLength<usize>,
+{
+    fn from(t: IntVar<T, N, SIGN>) -> Self {
+        t.0
+    }
+}
+
+impl<T, N, const SIGN: bool> From<IntExprNode<T, N, SIGN>> for IntVar<T, N, SIGN>
+where
+    T: VarLit + Debug,
+    N: ArrayLength<usize>,
+{
+    fn from(t: IntExprNode<T, N, SIGN>) -> Self {
+        Self(t)
+    }
+}
+
+macro_rules! impl_xint_from {
+    ($t:ident, $creator:ident) => {
+        macro_rules! impl_uint_from_x {
+            ($pty:ty) => {
+                impl<N> From<$pty> for IntVar<$t, N, false>
+                where
+                    N: ArrayLength<usize>,
+                    IntExprNode<$t, N, false>: TryIntConstant<$t, $pty>,
+                {
+                    fn from(value: $pty) -> Self {
+                        $creator.with_borrow(|ec| {
+                            IntExprNode::<$t, N, false>::try_constant(ec.clone().unwrap(), value)
+                                .map(|x| Self(x))
+                                .unwrap()
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_upty!(impl_uint_from_x);
+
+        macro_rules! impl_int_from_x {
+            ($pty:ty) => {
+                impl<N> From<$pty> for IntVar<$t, N, true>
+                where
+                    N: ArrayLength<usize>,
+                    IntExprNode<$t, N, true>: TryIntConstant<$t, $pty>,
+                {
+                    fn from(value: $pty) -> Self {
+                        $creator.with_borrow(|ec| {
+                            IntExprNode::<$t, N, true>::try_constant(ec.clone().unwrap(), value)
+                                .map(|x| Self(x))
+                                .unwrap()
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_ipty!(impl_int_from_x);
+    };
+}
+
+impl_xint_from!(i32, EXPR_CREATOR_32);
+impl_xint_from!(isize, EXPR_CREATOR_SYS);
+
+impl<'a, T, N, const SIGN: bool> BitVal for &'a IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = BoolVar<T>;
+
+    #[inline]
+    fn bitnum(self) -> usize {
+        N::USIZE
+    }
+
+    fn bit(self, x: usize) -> Self::Output {
+        BoolVar::from(self.0.bit(x))
+    }
+}
+
+impl<T, N, const SIGN: bool> BitMask<BoolExprNode<T>> for IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    fn bitmask(t: BoolExprNode<T>) -> Self {
+        Self(IntExprNode::bitmask(t))
+    }
+}
+
+impl<T, N, const SIGN: bool> BitMask<BoolVar<T>> for IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    fn bitmask(t: BoolVar<T>) -> Self {
+        Self(IntExprNode::bitmask(t.into()))
+    }
+}
+
+// IntEqual
+
+impl<T, N, const SIGN: bool> IntEqual for IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.equal(rhs.0))
+    }
+
+    fn nequal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.nequal(rhs.0))
+    }
+}
+
+impl<T, N, const SIGN: bool> IntEqual<IntVar<T, N, SIGN>> for &IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: IntVar<T, N, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.clone().equal(rhs.0))
+    }
+
+    fn nequal(self, rhs: IntVar<T, N, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.clone().nequal(rhs.0))
+    }
+}
+
+impl<T, N, const SIGN: bool> IntEqual<&IntVar<T, N, SIGN>> for IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: &IntVar<T, N, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.equal(rhs.0.clone()))
+    }
+
+    fn nequal(self, rhs: &IntVar<T, N, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.nequal(rhs.0.clone()))
+    }
+}
+
+impl<T, N, const SIGN: bool> IntEqual for &IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.clone().equal(rhs.0.clone()))
+    }
+
+    fn nequal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.clone().nequal(rhs.0.clone()))
+    }
+}
+
+macro_rules! impl_xint_equal {
+    ($t:ident) => {
+        macro_rules! int_equal_uint_x_sign {
+            ($pty:ident, $sign:expr) => {
+                impl<N: ArrayLength<usize>> IntEqual<$pty> for IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: $pty) -> Self::Output {
+                        self.equal(Self::from(rhs))
+                    }
+
+                    fn nequal(self, rhs: $pty) -> Self::Output {
+                        self.nequal(Self::from(rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<&$pty> for IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: &$pty) -> Self::Output {
+                        self.equal(Self::from(*rhs))
+                    }
+
+                    fn nequal(self, rhs: &$pty) -> Self::Output {
+                        self.nequal(Self::from(*rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<$pty> for &IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: $pty) -> Self::Output {
+                        self.equal(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+
+                    fn nequal(self, rhs: $pty) -> Self::Output {
+                        self.nequal(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<&$pty> for &IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: &$pty) -> Self::Output {
+                        self.equal(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+
+                    fn nequal(self, rhs: &$pty) -> Self::Output {
+                        self.nequal(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+                }
+
+                impl<N: ArrayLength<usize>> IntEqual<IntVar<$t, N, $sign>> for $pty {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).equal(rhs)
+                    }
+
+                    fn nequal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).nequal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<&IntVar<$t, N, $sign>> for $pty {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).equal(rhs)
+                    }
+
+                    fn nequal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).nequal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<IntVar<$t, N, $sign>> for &$pty {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).equal(rhs)
+                    }
+
+                    fn nequal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).nequal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntEqual<&IntVar<$t, N, $sign>> for &$pty {
+                    type Output = BoolVar<$t>;
+
+                    fn equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).equal(rhs)
+                    }
+
+                    fn nequal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).nequal(rhs)
+                    }
+                }
+            };
+        }
+
+        macro_rules! int_equal_uint_x_unsigned {
+            ($pty:ident) => {
+                int_equal_uint_x_sign!($pty, false);
+            };
+        }
+
+        impl_int_upty!(int_equal_uint_x_unsigned);
+
+        macro_rules! int_equal_uint_x_signed {
+            ($pty:ident) => {
+                int_equal_uint_x_sign!($pty, true);
+            };
+        }
+
+        impl_int_ipty!(int_equal_uint_x_signed);
+    };
+}
+
+impl_xint_equal!(i32);
+impl_xint_equal!(isize);
+
+// IntOrd
+
+macro_rules! impl_selfxint_ord {
+    ($sign:expr) => {
+        impl<T, N> IntOrd for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.less_than(rhs.0))
+            }
+
+            fn less_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.less_equal(rhs.0))
+            }
+
+            fn greater_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.greater_than(rhs.0))
+            }
+
+            fn greater_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.greater_equal(rhs.0))
+            }
+        }
+
+        impl<T, N> IntOrd<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().less_than(rhs.0))
+            }
+
+            fn less_equal(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().less_equal(rhs.0))
+            }
+
+            fn greater_than(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_than(rhs.0))
+            }
+
+            fn greater_equal(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_equal(rhs.0))
+            }
+        }
+
+        impl<T, N> IntOrd<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.less_than(rhs.0.clone()))
+            }
+
+            fn less_equal(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.less_equal(rhs.0.clone()))
+            }
+
+            fn greater_than(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.greater_than(rhs.0.clone()))
+            }
+
+            fn greater_equal(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                BoolVar::from(self.0.greater_equal(rhs.0.clone()))
+            }
+        }
+
+        impl<T, N> IntOrd for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().less_than(rhs.0.clone()))
+            }
+
+            fn less_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().less_equal(rhs.0.clone()))
+            }
+
+            fn greater_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_than(rhs.0.clone()))
+            }
+
+            fn greater_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_equal(rhs.0.clone()))
+            }
+        }
+    };
+}
+
+impl_selfxint_ord!(false);
+impl_selfxint_ord!(true);
+
+macro_rules! impl_xint_ord {
+    ($t:ident) => {
+        macro_rules! int_ord_uint_x_sign {
+            ($pty:ident, $sign:expr) => {
+                impl<N: ArrayLength<usize>> IntOrd<$pty> for IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: $pty) -> Self::Output {
+                        self.less_than(Self::from(rhs))
+                    }
+
+                    fn less_equal(self, rhs: $pty) -> Self::Output {
+                        self.less_equal(Self::from(rhs))
+                    }
+
+                    fn greater_than(self, rhs: $pty) -> Self::Output {
+                        self.greater_than(Self::from(rhs))
+                    }
+
+                    fn greater_equal(self, rhs: $pty) -> Self::Output {
+                        self.greater_equal(Self::from(rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<&$pty> for IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: &$pty) -> Self::Output {
+                        self.less_than(Self::from(*rhs))
+                    }
+
+                    fn less_equal(self, rhs: &$pty) -> Self::Output {
+                        self.less_equal(Self::from(*rhs))
+                    }
+
+                    fn greater_than(self, rhs: &$pty) -> Self::Output {
+                        self.greater_than(Self::from(*rhs))
+                    }
+
+                    fn greater_equal(self, rhs: &$pty) -> Self::Output {
+                        self.greater_equal(Self::from(*rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<$pty> for &IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: $pty) -> Self::Output {
+                        self.less_than(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+
+                    fn less_equal(self, rhs: $pty) -> Self::Output {
+                        self.less_equal(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+
+                    fn greater_than(self, rhs: $pty) -> Self::Output {
+                        self.greater_than(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+
+                    fn greater_equal(self, rhs: $pty) -> Self::Output {
+                        self.greater_equal(IntVar::<$t, N, $sign>::from(rhs))
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<&$pty> for &IntVar<$t, N, $sign> {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: &$pty) -> Self::Output {
+                        self.less_than(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+
+                    fn less_equal(self, rhs: &$pty) -> Self::Output {
+                        self.less_equal(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+
+                    fn greater_than(self, rhs: &$pty) -> Self::Output {
+                        self.greater_than(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+
+                    fn greater_equal(self, rhs: &$pty) -> Self::Output {
+                        self.greater_equal(IntVar::<$t, N, $sign>::from(*rhs))
+                    }
+                }
+
+                impl<N: ArrayLength<usize>> IntOrd<IntVar<$t, N, $sign>> for $pty {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).less_than(rhs)
+                    }
+
+                    fn less_equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).less_equal(rhs)
+                    }
+
+                    fn greater_than(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).greater_than(rhs)
+                    }
+
+                    fn greater_equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self).greater_equal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<&IntVar<$t, N, $sign>> for $pty {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).less_than(rhs)
+                    }
+
+                    fn less_equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).less_equal(rhs)
+                    }
+
+                    fn greater_than(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).greater_than(rhs)
+                    }
+
+                    fn greater_equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(self.clone()).greater_equal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<IntVar<$t, N, $sign>> for &$pty {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).less_than(rhs)
+                    }
+
+                    fn less_equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).less_equal(rhs)
+                    }
+
+                    fn greater_than(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).greater_than(rhs)
+                    }
+
+                    fn greater_equal(self, rhs: IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).greater_equal(rhs)
+                    }
+                }
+                impl<N: ArrayLength<usize>> IntOrd<&IntVar<$t, N, $sign>> for &$pty {
+                    type Output = BoolVar<$t>;
+
+                    fn less_than(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).less_than(rhs)
+                    }
+
+                    fn less_equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).less_equal(rhs)
+                    }
+
+                    fn greater_than(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).greater_than(rhs)
+                    }
+
+                    fn greater_equal(self, rhs: &IntVar<$t, N, $sign>) -> Self::Output {
+                        IntVar::<$t, N, $sign>::from(*self).greater_equal(rhs)
+                    }
+                }
+            };
+        }
+
+        macro_rules! int_ord_uint_x_unsigned {
+            ($pty:ident) => {
+                int_ord_uint_x_sign!($pty, false);
+            };
+        }
+
+        impl_int_upty!(int_ord_uint_x_unsigned);
+
+        macro_rules! int_ord_uint_x_signed {
+            ($pty:ident) => {
+                int_ord_uint_x_sign!($pty, true);
+            };
+        }
+
+        impl_int_ipty!(int_ord_uint_x_signed);
+    };
+}
+
+impl_xint_ord!(i32);
+impl_xint_ord!(isize);
