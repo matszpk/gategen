@@ -47,6 +47,7 @@ pub use gate::{Literal, VarLit};
 
 pub mod boolexpr;
 pub mod boolexpr_creator;
+pub mod boolvar;
 
 pub mod dynintexpr;
 mod int_utils;
