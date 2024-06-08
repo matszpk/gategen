@@ -78,12 +78,84 @@ macro_rules! impl_create_var {
                     Self(IntExprNode::<$t, N, SIGN>::variable(ec.clone().unwrap()))
                 })
             }
+
+            pub fn filled_lit(v: impl Into<Literal<$t>>) -> Self {
+                $creator.with_borrow(|ec| {
+                    Self(IntExprNode::<$t, N, SIGN>::filled(ec.clone().unwrap(), v))
+                })
+            }
         }
     };
 }
 
 impl_create_var!(i32, EXPR_CREATOR_32);
 impl_create_var!(isize, EXPR_CREATOR_SYS);
+
+impl<T, N: ArrayLength<usize>, const SIGN: bool> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    /// Creates integer from boolean expressions. An argument is object convertible into
+    /// iterator of `BoolExprNode`.
+    pub fn from_iter<ITP: Into<BoolVar<T>>>(iter: impl IntoIterator<Item = ITP>) -> Option<Self> {
+        IntExprNode::from_boolexprs(iter.into_iter().map(|x| BoolExprNode::from(x.into())))
+            .map(|x| Self(x))
+    }
+
+    pub fn filled(v: impl Into<BoolVar<T>>) -> Self {
+        Self(IntExprNode::filled_expr(BoolExprNode::from(v.into())))
+    }
+
+    /// Casts integer into unsigned integer.
+    pub fn as_unsigned(self) -> IntVar<T, N, false> {
+        IntVar::<T, N, false>::from(self.0.as_unsigned())
+    }
+
+    /// Casts integer into signed integer.
+    pub fn as_signed(self) -> IntVar<T, N, true> {
+        IntVar::<T, N, true>::from(self.0.as_signed())
+    }
+
+    pub fn to_circuit(
+        &self,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        HashMap<T, <T as VarLit>::Unsigned>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned:
+            Clone + Copy + PartialEq + cmp::Eq + PartialOrd + cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        self.0.to_circuit()
+    }
+
+    pub fn from_circuit(
+        circuit: Circuit<<T as VarLit>::Unsigned>,
+        inputs: impl IntoIterator<Item = BoolVar<T>>,
+    ) -> Option<Self>
+    where
+        <T as VarLit>::Unsigned:
+            Clone + Copy + PartialEq + cmp::Eq + PartialOrd + cmp::Ord + Default,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+    {
+        IntExprNode::<T, N, SIGN>::from_boolexprs(BoolExprNode::<T>::from_circuit(
+            circuit,
+            inputs.into_iter().map(|x| BoolExprNode::<T>::from(x)),
+        ))
+        .map(|x| Self(x))
+    }
+}
 
 // TryFrom implementation
 macro_rules! impl_int_try_from {
