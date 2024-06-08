@@ -671,3 +671,6 @@ where
         full_adder(a, b, c)
     }
 }
+
+pub type BoolVar32 = BoolVar<i32>;
+pub type BoolVarSys = BoolVar<isize>;
