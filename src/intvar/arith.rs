@@ -614,3 +614,437 @@ new_opassign_impl!(
     mul_assign_upty,
     mul_assign_ipty
 );
+
+macro_rules! new_condop_impl {
+    ($t:ident, $u:ident, $v:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<IntVar<T, N, SIGN>>
+            for IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: IntVar<T, N, SIGN>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$v(rhs.0);
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<&IntVar<T, N, SIGN>>
+            for IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &IntVar<T, N, SIGN>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$v(rhs.0.clone());
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<IntVar<T, N, SIGN>>
+            for &IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: IntVar<T, N, SIGN>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$v(rhs.0);
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<&IntVar<T, N, SIGN>>
+            for &IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &IntVar<T, N, SIGN>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$v(rhs.0.clone());
+                (IntVar(r), c.into())
+            }
+        }
+
+        macro_rules! $macro_gen {
+            ($sign:expr, $pty:ty) => {
+                impl<T, N: ArrayLength<usize>> $t<$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                        self.$u(Self::from(rhs))
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<&$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                        self.$u(Self::from(*rhs))
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<$pty> for &IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                        self.$u(IntVar::<T, N, $sign>::from(rhs))
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<&$pty> for &IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                        self.$u(IntVar::<T, N, $sign>::from(*rhs))
+                    }
+                }
+
+                impl<T, N: ArrayLength<usize>> $t<IntVar<T, N, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                        IntVar::<T, N, $sign>::from(self).$u(rhs)
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<&IntVar<T, N, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                        IntVar::<T, N, $sign>::from(self).$u(rhs)
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<IntVar<T, N, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                        IntVar::<T, N, $sign>::from(*self).$u(rhs)
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<&IntVar<T, N, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = IntVar<T, N, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                        IntVar::<T, N, $sign>::from(*self).$u(rhs)
+                    }
+                }
+            };
+        }
+
+        macro_rules! $macro_upty {
+            ($pty:ty) => {
+                $macro_gen!(false, $pty);
+            };
+        }
+        macro_rules! $macro_ipty {
+            ($pty:ty) => {
+                $macro_gen!(true, $pty);
+            };
+        }
+
+        impl_int_upty!($macro_upty);
+        impl_int_ipty!($macro_ipty);
+    };
+}
+
+new_condop_impl!(
+    IntCondAdd,
+    cond_add,
+    cond_add,
+    condadd_gen,
+    condadd_upty,
+    condadd_ipty
+);
+new_condop_impl!(
+    IntCondSub,
+    cond_sub,
+    cond_sub,
+    condsub_gen,
+    condsub_upty,
+    condsub_ipty
+);
+
+macro_rules! condmul_varvar {
+    ($sign:expr) => {
+        impl<T, N: ArrayLength<usize>> IntCondMul<IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.cond_mul(rhs.0);
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.cond_mul(rhs.0.clone());
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().cond_mul(rhs.0);
+                (IntVar(r), c.into())
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().cond_mul(rhs.0.clone());
+                (IntVar(r), c.into())
+            }
+        }
+    };
+}
+
+condmul_varvar!(false);
+condmul_varvar!(true);
+
+macro_rules! condmul_gen {
+    ($sign:expr, $pty:ty) => {
+        impl<T, N: ArrayLength<usize>> IntCondMul<$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(Self::from(rhs))
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(Self::from(*rhs))
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(IntVar::<T, N, $sign>::from(rhs))
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(IntVar::<T, N, $sign>::from(*rhs))
+            }
+        }
+
+        impl<T, N: ArrayLength<usize>> IntCondMul<IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(self).cond_mul(rhs)
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(self).cond_mul(rhs)
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(*self).cond_mul(rhs)
+            }
+        }
+        impl<T, N: ArrayLength<usize>> IntCondMul<&IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &IntVar<T, N, $sign>) -> (Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(*self).cond_mul(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! condmul_upty {
+    ($pty:ty) => {
+        condmul_gen!(false, $pty);
+    };
+}
+macro_rules! condmul_ipty {
+    ($pty:ty) => {
+        condmul_gen!(true, $pty);
+    };
+}
+
+impl_int_upty!(condmul_upty);
+impl_int_ipty!(condmul_ipty);
