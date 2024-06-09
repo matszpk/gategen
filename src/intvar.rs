@@ -159,6 +159,64 @@ where
     }
 }
 
+impl<T, N: ArrayLength<usize>> IntVar<T, N, false>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    /// Creates integer that contains `N2` bits starting from `start`.
+    pub fn subvalue<N2>(&self, start: usize) -> IntVar<T, N2, false>
+    where
+        N2: ArrayLength<usize>,
+    {
+        IntVar::<T, N2, false>(self.0.subvalue::<N2>(start))
+    }
+
+    /// Creates integer that contains `N2` selected bits. List of bits given in
+    /// object that can be converted into iterator of indexes. It returns None if
+    /// number of elements in iterator doesn't match.
+    pub fn select_bits<N2, I>(&self, iter: I) -> Option<IntVar<T, N2, false>>
+    where
+        N2: ArrayLength<usize>,
+        I: IntoIterator<Item = usize>,
+    {
+        self.0.select_bits::<N2, I>(iter).map(|x| x.into())
+    }
+
+    /// Creates integer of concatenation of self and `rest`.
+    pub fn concat<N2, IT>(self, rest: IT) -> IntVar<T, Sum<N, N2>, false>
+    where
+        N: Add<N2>,
+        N2: ArrayLength<usize>,
+        Sum<N, N2>: ArrayLength<usize>,
+        IT: Into<IntVar<T, N2, false>>,
+    {
+        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into().into()))
+    }
+
+    /// Splits integer into two parts: the first with `K` bits and second with rest of bits.
+    pub fn split<K>(
+        self,
+    ) -> (
+        IntVar<T, K, false>,
+        IntVar<T, operator_aliases::Diff<N, K>, false>,
+    )
+    where
+        N: Sub<K>,
+        K: ArrayLength<usize>,
+        operator_aliases::Diff<N, K>: ArrayLength<usize>,
+    {
+        let (s1, s2) = self.0.split::<K>();
+        (
+            IntVar::<T, K, false>(s1),
+            IntVar::<T, operator_aliases::Diff<N, K>, false>(s2),
+        )
+    }
+}
+
 // TryFrom implementation
 macro_rules! impl_int_try_from {
     ($ty1:ty, $ty2: ty, $($gparams:ident),*) => {
