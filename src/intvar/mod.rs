@@ -31,11 +31,14 @@ pub use crate::boolvar::{call32, callsys};
 use crate::boolvar::{BoolVar, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
 use crate::gate::{Literal, VarLit};
 use crate::intexpr::{IntError, IntExprNode};
-use crate::{impl_int_ipty, impl_int_upty, impl_int_ty1_lt_ty2};
+use crate::{impl_int_ipty, impl_int_ty1_lt_ty2, impl_int_upty};
 use gatesim::Circuit;
 
 use crate::intexpr;
 pub use crate::intexpr::traits::*;
+
+pub mod arith;
+pub use arith::*;
 
 /// The main structure that represents integer expression, subexpression or integer value.
 /// It provides same operations as IntExprNode but they are easier to use
