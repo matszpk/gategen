@@ -22,8 +22,8 @@
 
 use std::fmt::Debug;
 use std::iter;
-use std::ops::{Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
-use std::ops::{Mul, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub};
+use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
+use std::ops::{Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
 
 use generic_array::typenum::*;
 use generic_array::*;
@@ -255,3 +255,152 @@ new_op_impl!(
     modmul_ipty
 );
 new_op_impl!(Mul, mul, mod_mul, mul_gen, mul_upty, mul_ipty);
+
+macro_rules! new_opassign_impl {
+    ($t:ident, $u:ident, $v:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<IntVar<T, N, SIGN>>
+            for IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            fn $u(&mut self, rhs: IntVar<T, N, SIGN>) {
+                self.0.$v(rhs.0);
+            }
+        }
+        impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<&IntVar<T, N, SIGN>>
+            for IntVar<T, N, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            fn $u(&mut self, rhs: &IntVar<T, N, SIGN>) {
+                self.0.$v(rhs.0.clone());
+            }
+        }
+
+        macro_rules! $macro_gen {
+            ($sign:expr, $pty:ty) => {
+                impl<T, N: ArrayLength<usize>> $t<$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    fn $u(&mut self, rhs: $pty) {
+                        self.$u(Self::from(rhs));
+                    }
+                }
+                impl<T, N: ArrayLength<usize>> $t<&$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    fn $u(&mut self, rhs: &$pty) {
+                        self.$u(Self::from(*rhs));
+                    }
+                }
+            };
+        }
+
+        macro_rules! $macro_upty {
+            ($pty:ty) => {
+                $macro_gen!(false, $pty);
+            };
+        }
+        macro_rules! $macro_ipty {
+            ($pty:ty) => {
+                $macro_gen!(true, $pty);
+            };
+        }
+
+        impl_int_upty!($macro_upty);
+        impl_int_ipty!($macro_ipty);
+    };
+}
+
+new_opassign_impl!(
+    BitAndAssign,
+    bitand_assign,
+    bitand_assign,
+    bitand_assign_gen,
+    bitand_assign_upty,
+    bitand_assign_ipty
+);
+new_opassign_impl!(
+    BitOrAssign,
+    bitor_assign,
+    bitor_assign,
+    bitor_assign_gen,
+    bitor_assign_upty,
+    bitor_assign_ipty
+);
+new_opassign_impl!(
+    BitXorAssign,
+    bitxor_assign,
+    bitxor_assign,
+    bitxor_assign_gen,
+    bitxor_assign_upty,
+    bitxor_assign_ipty
+);
+new_opassign_impl!(
+    IntModAddAssign,
+    mod_add_assign,
+    mod_add_assign,
+    modadd_assign_gen,
+    modadd_assign_upty,
+    modadd_assign_ipty
+);
+new_opassign_impl!(
+    AddAssign,
+    add_assign,
+    mod_add_assign,
+    add_assign_gen,
+    add_assign_upty,
+    add_assign_ipty
+);
+new_opassign_impl!(
+    IntModSubAssign,
+    mod_sub_assign,
+    mod_sub_assign,
+    modsub_assign_gen,
+    modsub_assign_upty,
+    modsub_assign_ipty
+);
+new_opassign_impl!(
+    SubAssign,
+    sub_assign,
+    mod_sub_assign,
+    sub_assign_gen,
+    sub_assign_upty,
+    sub_assign_ipty
+);
+new_opassign_impl!(
+    IntModMulAssign,
+    mod_mul_assign,
+    mod_mul_assign,
+    modmul_assign_gen,
+    modmul_assign_upty,
+    modmul_assign_ipty
+);
+new_opassign_impl!(
+    MulAssign,
+    mul_assign,
+    mod_mul_assign,
+    mul_assign_gen,
+    mul_assign_upty,
+    mul_assign_ipty
+);
