@@ -22,10 +22,8 @@
 
 use std::fmt::Debug;
 use std::iter;
-use std::ops::{
-    Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Neg, Not, Shl,
-    ShlAssign, Shr, ShrAssign, Sub,
-};
+use std::ops::{Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
+use std::ops::{Mul, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub};
 
 use generic_array::typenum::*;
 use generic_array::*;
