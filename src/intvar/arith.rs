@@ -62,6 +62,22 @@ where
     }
 }
 
+impl<T, N, const SIGN: bool> Not for &IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, SIGN> as Not>::Output;
+
+    fn not(self) -> Self::Output {
+        IntVar(!self.0.clone())
+    }
+}
+
 impl<T, N> IntModNeg for IntVar<T, N, false>
 where
     T: VarLit + Neg<Output = T> + Debug,
@@ -75,6 +91,22 @@ where
 
     fn mod_neg(self) -> Self {
         Self((self.0.as_signed().mod_neg()).as_unsigned())
+    }
+}
+
+impl<T, N> IntModNeg for &IntVar<T, N, false>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, false> as IntModNeg>::Output;
+
+    fn mod_neg(self) -> Self::Output {
+        IntVar((self.0.clone().as_signed().mod_neg()).as_unsigned())
     }
 }
 
@@ -94,6 +126,22 @@ where
     }
 }
 
+impl<T, N> IntModNeg for &IntVar<T, N, true>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, true> as IntModNeg>::Output;
+
+    fn mod_neg(self) -> Self::Output {
+        IntVar(self.0.clone().mod_neg())
+    }
+}
+
 impl<T, N> Neg for IntVar<T, N, false>
 where
     T: VarLit + Neg<Output = T> + Debug,
@@ -110,6 +158,22 @@ where
     }
 }
 
+impl<T, N> Neg for &IntVar<T, N, false>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, false> as Neg>::Output;
+
+    fn neg(self) -> Self::Output {
+        IntVar((self.0.clone().as_signed().mod_neg()).as_unsigned())
+    }
+}
+
 impl<T, N> Neg for IntVar<T, N, true>
 where
     T: VarLit + Neg<Output = T> + Debug,
@@ -123,6 +187,22 @@ where
 
     fn neg(self) -> Self {
         Self(self.0.mod_neg())
+    }
+}
+
+impl<T, N> Neg for &IntVar<T, N, true>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, true> as Neg>::Output;
+
+    fn neg(self) -> Self::Output {
+        IntVar(self.0.clone().mod_neg())
     }
 }
 
