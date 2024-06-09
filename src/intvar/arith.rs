@@ -23,8 +23,8 @@
 use std::fmt::Debug;
 use std::iter;
 use std::ops::{
-    Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not, Shl, ShlAssign,
-    Shr, ShrAssign, Sub,
+    Add, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Neg, Not, Shl,
+    ShlAssign, Shr, ShrAssign, Sub,
 };
 
 use generic_array::typenum::*;
@@ -248,3 +248,12 @@ new_op_impl!(
     modsub_ipty
 );
 new_op_impl!(Sub, sub, mod_sub, sub_gen, sub_upty, sub_ipty);
+new_op_impl!(
+    IntModMul,
+    mod_mul,
+    mod_mul,
+    modmul_gen,
+    modmul_upty,
+    modmul_ipty
+);
+new_op_impl!(Mul, mul, mod_mul, mul_gen, mul_upty, mul_ipty);
