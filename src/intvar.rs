@@ -175,6 +175,14 @@ where
         IntVar::<T, N2, false>(self.0.subvalue::<N2>(start))
     }
 
+    /// Creates integer that contains `N2` bits starting from `start`.
+    pub fn subv<N2>(&self, start: usize) -> IntVar<T, N2, false>
+    where
+        N2: ArrayLength<usize>,
+    {
+        IntVar::<T, N2, false>(self.0.subvalue::<N2>(start))
+    }
+
     /// Creates integer that contains `N2` selected bits. List of bits given in
     /// object that can be converted into iterator of indexes. It returns None if
     /// number of elements in iterator doesn't match.
@@ -188,6 +196,17 @@ where
 
     /// Creates integer of concatenation of self and `rest`.
     pub fn concat<N2, IT>(self, rest: IT) -> IntVar<T, Sum<N, N2>, false>
+    where
+        N: Add<N2>,
+        N2: ArrayLength<usize>,
+        Sum<N, N2>: ArrayLength<usize>,
+        IT: Into<IntVar<T, N2, false>>,
+    {
+        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into().into()))
+    }
+
+    /// Creates integer of concatenation of self and `rest`.
+    pub fn cat<N2, IT>(self, rest: IT) -> IntVar<T, Sum<N, N2>, false>
     where
         N: Add<N2>,
         N2: ArrayLength<usize>,
