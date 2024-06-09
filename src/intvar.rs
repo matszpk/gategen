@@ -17,33 +17,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-use std::cell::RefCell;
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::iter;
-use std::ops::{Add, BitAnd, BitOr, Neg, Not, Sub};
-use std::rc::Rc;
+use std::ops::{Add, Neg, Sub};
 
 use generic_array::typenum::*;
 use generic_array::*;
 
-use crate::boolexpr::{bool_ite, half_adder, BoolExprNode};
+use crate::boolexpr::BoolExprNode;
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 pub use crate::boolvar::{call32, callsys};
 use crate::boolvar::{BoolVar, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
-use crate::dynintexpr::DynIntExprNode;
 use crate::gate::{Literal, VarLit};
-use crate::int_utils::*;
 use crate::intexpr::{IntError, IntExprNode};
-use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
-use crate::{impl_int_ipty, impl_int_ipty_ty1, impl_int_upty, impl_int_upty_ty1};
+use crate::{impl_int_ipty, impl_int_upty, impl_int_ty1_lt_ty2};
 use gatesim::Circuit;
 
 use crate::intexpr;
-pub use crate::intexpr::bin_arith::*;
-pub use crate::intexpr::extra_arith::*;
-pub use crate::intexpr::int_arith::*;
 pub use crate::intexpr::traits::*;
 
 /// The main structure that represents integer expression, subexpression or integer value.
