@@ -40,6 +40,7 @@ use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
 use crate::{impl_int_ipty, impl_int_ipty_ty1, impl_int_upty, impl_int_upty_ty1};
 use gatesim::Circuit;
 
+use crate::intexpr;
 pub use crate::intexpr::bin_arith::*;
 pub use crate::intexpr::extra_arith::*;
 pub use crate::intexpr::int_arith::*;
@@ -957,3 +958,99 @@ macro_rules! impl_xint_ord {
 
 impl_xint_ord!(i32);
 impl_xint_ord!(isize);
+
+pub use crate::intexpr::int_ite;
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_table<T, N, K, I, ITP, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    table_iter: I,
+) -> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<IntVar<T, N, SIGN>>,
+    I: IntoIterator<Item = ITP>,
+{
+    IntVar::<T, N, SIGN>(intexpr::int_table(
+        index.into(),
+        table_iter.into_iter().map(|x| x.into().into()),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_booltable<T, N, K, I, ITP, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    table_iter: I,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<BoolVar<T>>,
+    I: IntoIterator<Item = ITP>,
+{
+    BoolVar::<T>::from(intexpr::int_booltable(
+        index.into(),
+        table_iter.into_iter().map(|x| x.into().into()),
+    ))
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn int_demux<T, N, K, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    value: IntVar<T, N, SIGN>,
+) -> Vec<IntVar<T, N, SIGN>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+{
+    intexpr::int_demux(index.into(), value.into())
+        .into_iter()
+        .map(|x| x.into())
+        .collect::<Vec<_>>()
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn int_booldemux<T, K, BTP, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    value: BTP,
+) -> Vec<BoolVar<T>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    K: ArrayLength<usize>,
+    BTP: Into<BoolVar<T>>,
+{
+    intexpr::int_booldemux(index.into(), value.into().into())
+        .into_iter()
+        .map(|x| x.into())
+        .collect::<Vec<_>>()
+}
