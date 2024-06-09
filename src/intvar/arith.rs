@@ -206,6 +206,42 @@ where
     }
 }
 
+impl<T, N> IntCondNeg for IntVar<T, N, true>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = Self;
+    type OutputCond = BoolVar<T>;
+
+    fn cond_neg(self) -> (Self::Output, Self::OutputCond) {
+        let (r, c) = self.0.cond_neg();
+        (Self(r), c.into())
+    }
+}
+
+impl<T, N> IntCondNeg for &IntVar<T, N, true>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = <IntVar<T, N, true> as IntCondNeg>::Output;
+    type OutputCond = <IntVar<T, N, true> as IntCondNeg>::OutputCond;
+
+    fn cond_neg(self) -> (Self::Output, Self::OutputCond) {
+        let (r, c) = self.0.clone().cond_neg();
+        (IntVar(r), c.into())
+    }
+}
+
 macro_rules! new_op_impl {
     ($t:ident, $u:ident, $v:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
         impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<IntVar<T, N, SIGN>>
