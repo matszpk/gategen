@@ -535,9 +535,9 @@ where
 }
 
 macro_rules! impl_xint_equal {
-    ($t:ident) => {
+    ($t:ty) => {
         macro_rules! int_equal_uint_x_sign {
-            ($pty:ident, $sign:expr) => {
+            ($pty:ty, $sign:expr) => {
                 impl<N: ArrayLength<usize>> IntEqual<$pty> for IntVar<$t, N, $sign> {
                     type Output = BoolVar<$t>;
 
@@ -631,7 +631,7 @@ macro_rules! impl_xint_equal {
         }
 
         macro_rules! int_equal_uint_x_unsigned {
-            ($pty:ident) => {
+            ($pty:ty) => {
                 int_equal_uint_x_sign!($pty, false);
             };
         }
@@ -639,7 +639,7 @@ macro_rules! impl_xint_equal {
         impl_int_upty!(int_equal_uint_x_unsigned);
 
         macro_rules! int_equal_uint_x_signed {
-            ($pty:ident) => {
+            ($pty:ty) => {
                 int_equal_uint_x_sign!($pty, true);
             };
         }
@@ -773,9 +773,9 @@ impl_selfxint_ord!(false);
 impl_selfxint_ord!(true);
 
 macro_rules! impl_xint_ord {
-    ($t:ident) => {
+    ($t:ty) => {
         macro_rules! int_ord_uint_x_sign {
-            ($pty:ident, $sign:expr) => {
+            ($pty:ty, $sign:expr) => {
                 impl<N: ArrayLength<usize>> IntOrd<$pty> for IntVar<$t, N, $sign> {
                     type Output = BoolVar<$t>;
 
@@ -933,7 +933,7 @@ macro_rules! impl_xint_ord {
         }
 
         macro_rules! int_ord_uint_x_unsigned {
-            ($pty:ident) => {
+            ($pty:ty) => {
                 int_ord_uint_x_sign!($pty, false);
             };
         }
@@ -941,7 +941,7 @@ macro_rules! impl_xint_ord {
         impl_int_upty!(int_ord_uint_x_unsigned);
 
         macro_rules! int_ord_uint_x_signed {
-            ($pty:ident) => {
+            ($pty:ty) => {
                 int_ord_uint_x_sign!($pty, true);
             };
         }
