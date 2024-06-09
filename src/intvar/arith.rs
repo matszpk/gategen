@@ -41,8 +41,8 @@ where
     <isize as TryFrom<T>>::Error: Debug,
 {
     /// Calculation of an absolute value. It returns unsigned expression node.
-    pub fn abs(self) -> IntVar<T, N, false> {
-        IntVar::<T, N, false>(self.0.abs())
+    pub fn abs(&self) -> IntVar<T, N, false> {
+        IntVar::<T, N, false>(self.0.clone().abs())
     }
 }
 
