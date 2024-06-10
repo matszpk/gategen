@@ -242,6 +242,66 @@ where
     }
 }
 
+//////////
+// Add/Sub implementation
+
+impl<T, N: ArrayLength<usize>, const SIGN: bool> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    /// Returns result of modular addition with input carry `in_carry` and output carry.
+    pub fn addc_with_carry(&self, rhs: &Self, in_carry: &BoolVar<T>) -> (Self, BoolVar<T>) {
+        let (s, c) = self
+            .0
+            .clone()
+            .addc_with_carry(rhs.0.clone(), in_carry.clone().into());
+        (Self(s), c.into())
+    }
+
+    /// Returns result of modular addition with input carry.
+    pub fn addc(&self, rhs: &Self, in_carry: &BoolVar<T>) -> Self {
+        Self(self.0.clone().addc(rhs.0.clone(), in_carry.clone().into()))
+    }
+
+    /// Returns result of modular subtraction with input carry - it performs `(A + !B) + carry`.
+    pub fn subc(&self, rhs: Self, in_carry: &BoolVar<T>) -> Self {
+        Self(self.0.clone().subc(rhs.0.clone(), in_carry.clone().into()))
+    }
+
+    /// Returns result of modular addition of self and same carry.
+    pub fn add_same_carry(&self, in_carry: &BoolVar<T>) -> Self {
+        Self(self.0.clone().add_same_carry(in_carry.clone().into()))
+    }
+
+    /// Returns result of modular addition with input carry `in_carry` and output carry.
+    pub fn addc_with_carry_c(&self, rhs: &Self, in_carry: BoolVar<T>) -> (Self, BoolVar<T>) {
+        let (s, c) = self
+            .0
+            .clone()
+            .addc_with_carry(rhs.0.clone(), in_carry.clone().into());
+        (Self(s), c.into())
+    }
+
+    /// Returns result of modular addition with input carry.
+    pub fn addc_c<BT: Into<BoolVar<T>>>(&self, rhs: &Self, in_carry: BT) -> Self {
+        Self(self.0.clone().addc(rhs.0.clone(), in_carry.into().into()))
+    }
+
+    /// Returns result of modular subtraction with input carry - it performs `(A + !B) + carry`.
+    pub fn subc_c<BT: Into<BoolVar<T>>>(&self, rhs: Self, in_carry: BT) -> Self {
+        Self(self.0.clone().subc(rhs.0.clone(), in_carry.into().into()))
+    }
+
+    /// Returns result of modular addition of self and same carry.
+    pub fn add_same_carry_c<BT: Into<BoolVar<T>>>(&self, in_carry: BT) -> Self {
+        Self(self.0.clone().add_same_carry(in_carry.into().into()))
+    }
+}
+
 macro_rules! new_op_impl {
     ($t:ident, $u:ident, $v:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
         impl<T, N: ArrayLength<usize>, const SIGN: bool> $t<IntVar<T, N, SIGN>>
@@ -1553,3 +1613,225 @@ macro_rules! impl_int_shx_assign {
 
 impl_int_shx_assign!(ShlAssign, shl, shl_assign, impl_int_shl_assign_imm);
 impl_int_shx_assign!(ShrAssign, shr, shr_assign, impl_int_shr_assign_imm);
+
+// Fullmul
+macro_rules! impl_fullmul_sign {
+    ($sign:expr) => {
+        impl<T, N> FullMul<IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+
+            fn fullmul(self, rhs: Self) -> Self::Output {
+                IntVar::<T, operator_aliases::Sum<N, N>, $sign>(self.0.fullmul(rhs.0))
+            }
+        }
+        impl<T, N> FullMul<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+
+            fn fullmul(self, rhs: &Self) -> Self::Output {
+                IntVar::<T, operator_aliases::Sum<N, N>, $sign>(self.0.fullmul(rhs.0.clone()))
+            }
+        }
+        impl<T, N> FullMul<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+
+            fn fullmul(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, operator_aliases::Sum<N, N>, $sign>(self.0.clone().fullmul(rhs.0))
+            }
+        }
+        impl<T, N> FullMul<&IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+
+            fn fullmul(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, operator_aliases::Sum<N, N>, $sign>(
+                    self.0.clone().fullmul(rhs.0.clone()),
+                )
+            }
+        }
+    };
+}
+
+impl_fullmul_sign!(false);
+impl_fullmul_sign!(true);
+
+macro_rules! impl_int_fullmul_pty {
+    ($sign:expr, $pty:ty) => {
+        impl<T, N> FullMul<$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: $pty) -> Self::Output {
+                self.fullmul(Self::from(rhs))
+            }
+        }
+        impl<T, N> FullMul<&$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: &$pty) -> Self::Output {
+                self.fullmul(Self::from(*rhs))
+            }
+        }
+        impl<T, N> FullMul<$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: $pty) -> Self::Output {
+                self.fullmul(IntVar::<T, N, $sign>::from(rhs))
+            }
+        }
+        impl<T, N> FullMul<&$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: &$pty) -> Self::Output {
+                self.fullmul(IntVar::<T, N, $sign>::from(*rhs))
+            }
+        }
+
+        impl<T, N> FullMul<IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, N, $sign>::from(self).fullmul(rhs)
+            }
+        }
+        impl<T, N> FullMul<&IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, N, $sign>::from(self).fullmul(rhs.clone())
+            }
+        }
+        impl<T, N> FullMul<IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, N, $sign>::from(*self).fullmul(rhs)
+            }
+        }
+        impl<T, N> FullMul<&IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize> + Add,
+            <N as Add>::Output: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, operator_aliases::Sum<N, N>, $sign>;
+            fn fullmul(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                IntVar::<T, N, $sign>::from(*self).fullmul(rhs.clone())
+            }
+        }
+    };
+}
+
+macro_rules! impl_int_fullmul_upty {
+    ($pty:ty) => {
+        impl_int_fullmul_pty!(false, $pty);
+    };
+}
+macro_rules! impl_int_fullmul_ipty {
+    ($pty:ty) => {
+        impl_int_fullmul_pty!(true, $pty);
+    };
+}
+impl_int_upty!(impl_int_fullmul_upty);
+impl_int_ipty!(impl_int_fullmul_ipty);
