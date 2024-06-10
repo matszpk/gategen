@@ -23,6 +23,7 @@
 use std::fmt::Debug;
 use std::iter;
 use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
+use std::ops::{Div, Rem};
 use std::ops::{Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
 
 use generic_array::typenum::*;
@@ -2073,3 +2074,281 @@ macro_rules! impl_int_divmod_ipty {
 }
 impl_int_upty!(impl_int_divmod_upty);
 impl_int_ipty!(impl_int_divmod_ipty);
+
+// Division and remainder
+
+macro_rules! impl_int_div_mod {
+    ($sign:expr) => {
+        impl<T, N> Div<IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn div(self, rhs: Self) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T, N> Div<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn div(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T, N> Div<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+            fn div(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T, N> Div<&IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+            fn div(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+
+        impl<T, N> Rem<IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn rem(self, rhs: Self) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T, N> Rem<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn rem(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T, N> Rem<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+            fn rem(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T, N> Rem<&IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+            fn rem(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+    };
+}
+
+impl_int_div_mod!(false);
+impl_int_div_mod!(true);
+
+macro_rules! impl_int_div_mod_op {
+    ($trait:ident, $op:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
+        macro_rules! $macro_gen {
+            ($sign:expr, $pty:ty) => {
+                impl<T, N> $trait<$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (Self, BoolVar<T>);
+                    fn $op(self, rhs: $pty) -> Self::Output {
+                        self.$op(Self::from(rhs))
+                    }
+                }
+                impl<T, N> $trait<&$pty> for IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (Self, BoolVar<T>);
+                    fn $op(self, rhs: &$pty) -> Self::Output {
+                        self.$op(Self::from(*rhs))
+                    }
+                }
+                impl<T, N> $trait<$pty> for &IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: $pty) -> Self::Output {
+                        self.$op(IntVar::<T, N, $sign>::from(rhs))
+                    }
+                }
+                impl<T, N> $trait<&$pty> for &IntVar<T, N, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &$pty) -> Self::Output {
+                        self.$op(IntVar::<T, N, $sign>::from(*rhs))
+                    }
+                }
+
+                impl<T, N> $trait<IntVar<T, N, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                        IntVar::<T, N, $sign>::from(self).$op(rhs)
+                    }
+                }
+                impl<T, N> $trait<&IntVar<T, N, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                        IntVar::<T, N, $sign>::from(self).$op(rhs)
+                    }
+                }
+                impl<T, N> $trait<IntVar<T, N, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: IntVar<T, N, $sign>) -> Self::Output {
+                        IntVar::<T, N, $sign>::from(*self).$op(rhs)
+                    }
+                }
+                impl<T, N> $trait<&IntVar<T, N, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    N: ArrayLength<usize>,
+                    IntVar<T, N, $sign>: From<$pty>,
+                {
+                    type Output = (IntVar<T, N, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &IntVar<T, N, $sign>) -> Self::Output {
+                        IntVar::<T, N, $sign>::from(*self).$op(rhs)
+                    }
+                }
+            };
+        }
+
+        macro_rules! $macro_upty {
+            ($pty:ty) => {
+                $macro_gen!(false, $pty);
+            };
+        }
+        macro_rules! $macro_ipty {
+            ($pty:ty) => {
+                $macro_gen!(true, $pty);
+            };
+        }
+
+        impl_int_upty!($macro_upty);
+        impl_int_ipty!($macro_ipty);
+    };
+}
+
+impl_int_div_mod_op!(Div, div, int_div_pty, int_div_upty, int_div_ipty);
+impl_int_div_mod_op!(Rem, rem, int_rem_pty, int_rem_upty, int_rem_ipty);
