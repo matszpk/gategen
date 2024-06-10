@@ -1051,7 +1051,7 @@ impl_int_ipty!(condmul_ipty);
 
 // Shifts
 macro_rules! new_shiftop_impl {
-    ($t:ident, $u:ident, $mimm:ident, $mselfimm:ident) => {
+    ($t:ident, $u:ident, $mimm:ident) => {
         impl<T, N, N2, const SIGN: bool, const SIGN2: bool> $t<IntVar<T, N2, SIGN2>>
             for IntVar<T, N, SIGN>
         where
@@ -1180,7 +1180,11 @@ macro_rules! new_shiftop_impl {
 
         impl_int_upty!($mimm);
         impl_int_ipty!($mimm);
+    };
+}
 
+macro_rules! new_shiftop_selfimm_impl {
+    ($t:ident, $u:ident, $mselfimm:ident) => {
         macro_rules! $mselfimm {
             ($sign:expr, $ty:ty, $bits:ty) => {
                 impl<T, N, const SIGN: bool> $t<IntVar<T, N, SIGN>> for $ty
@@ -1268,8 +1272,12 @@ macro_rules! new_shiftop_impl {
     };
 }
 
-new_shiftop_impl!(Shl, shl, impl_shl_imm, impl_shl_self_imm);
-new_shiftop_impl!(Shr, shr, impl_shr_imm, impl_shr_self_imm);
+new_shiftop_impl!(Shl, shl, impl_shl_imm);
+new_shiftop_selfimm_impl!(Shl, shl, impl_shl_self_imm);
+new_shiftop_impl!(Shr, shr, impl_shr_imm);
+new_shiftop_selfimm_impl!(Shr, shr, impl_shr_self_imm);
+new_shiftop_impl!(IntRol, rotate_left, impl_rol_imm);
+new_shiftop_impl!(IntRor, rotate_right, impl_ror_imm);
 
 // CondShifts
 macro_rules! new_condshiftop_impl {
