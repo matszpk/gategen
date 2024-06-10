@@ -2352,3 +2352,94 @@ macro_rules! impl_int_div_mod_op {
 
 impl_int_div_mod_op!(Div, div, int_div_pty, int_div_upty, int_div_ipty);
 impl_int_div_mod_op!(Rem, rem, int_rem_pty, int_rem_upty, int_rem_ipty);
+
+// Extra arith
+impl<T, N, const SIGN: bool> ExtraOps for IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = Self;
+    type BoolOutput = BoolVar<T>;
+
+    fn count_zeros(self) -> Self::Output {
+        Self(self.0.count_zeros())
+    }
+
+    fn count_ones(self) -> Self::Output {
+        Self(self.0.count_ones())
+    }
+
+    fn leading_zeros(self) -> Self::Output {
+        Self(self.0.leading_zeros())
+    }
+
+    fn leading_ones(self) -> Self::Output {
+        Self(self.0.leading_ones())
+    }
+
+    fn trailing_zeros(self) -> Self::Output {
+        Self(self.0.trailing_zeros())
+    }
+
+    fn trailing_ones(self) -> Self::Output {
+        Self(self.0.trailing_ones())
+    }
+
+    fn is_power_of_two(self) -> Self::BoolOutput {
+        self.0.is_power_of_two().into()
+    }
+
+    fn reverse_bits(self) -> Self::Output {
+        Self(self.0.reverse_bits())
+    }
+}
+
+impl<T, N, const SIGN: bool> ExtraOps for &IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+{
+    type Output = IntVar<T, N, SIGN>;
+    type BoolOutput = BoolVar<T>;
+
+    fn count_zeros(self) -> Self::Output {
+        IntVar(self.0.clone().count_zeros())
+    }
+
+    fn count_ones(self) -> Self::Output {
+        IntVar(self.0.clone().count_ones())
+    }
+
+    fn leading_zeros(self) -> Self::Output {
+        IntVar(self.0.clone().leading_zeros())
+    }
+
+    fn leading_ones(self) -> Self::Output {
+        IntVar(self.0.clone().leading_ones())
+    }
+
+    fn trailing_zeros(self) -> Self::Output {
+        IntVar(self.0.clone().trailing_zeros())
+    }
+
+    fn trailing_ones(self) -> Self::Output {
+        IntVar(self.0.clone().trailing_ones())
+    }
+
+    fn is_power_of_two(self) -> Self::BoolOutput {
+        self.0.clone().is_power_of_two().into()
+    }
+
+    fn reverse_bits(self) -> Self::Output {
+        IntVar(self.0.clone().reverse_bits())
+    }
+}
