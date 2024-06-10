@@ -41,9 +41,14 @@ pub mod arith;
 pub use arith::*;
 
 /// The main structure that represents integer expression, subexpression or integer value.
+///
 /// It provides same operations as IntExprNode but they are easier to use
 /// thanks simpler and easier to use interface that allow references and implements
 /// standard arithmetic operators like addition, subtraction but with modular arithmetic rules.
+/// Simple examples:
+///
+/// * `((x1 << x2) + x3).equal(x3)`
+/// * `x1.fullmul(x1) + x2.fullmul(x2)`
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IntVar<T: VarLit + Debug, N: ArrayLength<usize>, const SIGN: bool>(
     IntExprNode<T, N, SIGN>,
