@@ -1835,3 +1835,241 @@ macro_rules! impl_int_fullmul_ipty {
 }
 impl_int_upty!(impl_int_fullmul_upty);
 impl_int_ipty!(impl_int_fullmul_ipty);
+
+// DivMod
+macro_rules! impl_divmod_sign {
+    ($sign:expr) => {
+        impl<T, N> DivMod<IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: Self) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.divmod(rhs.0);
+                (Self(d), Self(m), c.into())
+            }
+        }
+        impl<T, N> DivMod<&IntVar<T, N, $sign>> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &Self) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.divmod(rhs.0.clone());
+                (Self(d), Self(m), c.into())
+            }
+        }
+        impl<T, N> DivMod<IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.clone().divmod(rhs.0);
+                (IntVar(d), IntVar(m), c.into())
+            }
+        }
+        impl<T, N> DivMod<&IntVar<T, N, $sign>> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.clone().divmod(rhs.0.clone());
+                (IntVar(d), IntVar(m), c.into())
+            }
+        }
+    };
+}
+
+impl_divmod_sign!(false);
+impl_divmod_sign!(true);
+
+macro_rules! impl_int_divmod_pty {
+    ($sign:expr, $pty:ty) => {
+        impl<T, N> DivMod<$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: $pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(Self::from(rhs))
+            }
+        }
+        impl<T, N> DivMod<&$pty> for IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &$pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(Self::from(*rhs))
+            }
+        }
+        impl<T, N> DivMod<$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: $pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(IntVar::<T, N, $sign>::from(rhs))
+            }
+        }
+        impl<T, N> DivMod<&$pty> for &IntVar<T, N, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &$pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(IntVar::<T, N, $sign>::from(*rhs))
+            }
+        }
+
+        impl<T, N> DivMod<IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(self).divmod(rhs)
+            }
+        }
+        impl<T, N> DivMod<&IntVar<T, N, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(self).divmod(rhs.clone())
+            }
+        }
+        impl<T, N> DivMod<IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(*self).divmod(rhs)
+            }
+        }
+        impl<T, N> DivMod<&IntVar<T, N, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            N: ArrayLength<usize>,
+            IntVar<T, N, $sign>: From<$pty>,
+        {
+            type Output = IntVar<T, N, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &IntVar<T, N, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                IntVar::<T, N, $sign>::from(*self).divmod(rhs.clone())
+            }
+        }
+    };
+}
+
+macro_rules! impl_int_divmod_upty {
+    ($pty:ty) => {
+        impl_int_divmod_pty!(false, $pty);
+    };
+}
+macro_rules! impl_int_divmod_ipty {
+    ($pty:ty) => {
+        impl_int_divmod_pty!(true, $pty);
+    };
+}
+impl_int_upty!(impl_int_divmod_upty);
+impl_int_ipty!(impl_int_divmod_ipty);
