@@ -39,10 +39,27 @@ pub enum BoolVarError {
 }
 
 thread_local! {
+    pub(crate) static EXPR_CREATOR_16: RefCell<Option<Rc<RefCell<ExprCreator<i16>>>>> =
+        RefCell::new(None);
     pub(crate) static EXPR_CREATOR_32: RefCell<Option<Rc<RefCell<ExprCreator32>>>> =
         RefCell::new(None);
     pub(crate) static EXPR_CREATOR_SYS: RefCell<Option<Rc<RefCell<ExprCreatorSys>>>> =
         RefCell::new(None);
+}
+
+/// Call routine f that operates on expressions with new ExprCreator.
+/// Before call install new ExprCreator and after call uninstall ExprCreator.
+pub fn call16<F, R>(mut f: F) -> R
+where
+    F: FnMut() -> R,
+{
+    // install new ExprCreator
+    EXPR_CREATOR_16.with_borrow(|ec| assert!(!ec.is_some()));
+    EXPR_CREATOR_16.set(Some(ExprCreator::<i16>::new()));
+    let r = f();
+    // drop
+    let _ = EXPR_CREATOR_16.replace(None);
+    r
 }
 
 /// Call routine f that operates on expressions with new ExprCreator.
@@ -103,6 +120,7 @@ macro_rules! from_bool_impl {
         }
     };
 }
+from_bool_impl!(i16, EXPR_CREATOR_16);
 from_bool_impl!(i32, EXPR_CREATOR_32);
 from_bool_impl!(isize, EXPR_CREATOR_SYS);
 
@@ -116,6 +134,7 @@ macro_rules! from_literal_impl {
         }
     };
 }
+from_literal_impl!(i16, EXPR_CREATOR_16);
 from_literal_impl!(i32, EXPR_CREATOR_32);
 from_literal_impl!(isize, EXPR_CREATOR_SYS);
 
@@ -673,5 +692,6 @@ where
     }
 }
 
+pub type BoolVar16 = BoolVar<i16>;
 pub type BoolVar32 = BoolVar<i32>;
 pub type BoolVarSys = BoolVar<isize>;
