@@ -1171,6 +1171,8 @@ where
 pub type UVar32<N> = IntVar<i32, N, false>;
 pub type IVar32<N> = IntVar<i32, N, true>;
 
+pub type U1Var32 = IntVar<i32, U1, false>;
+pub type I1Var32 = IntVar<i32, U1, true>;
 pub type U2Var32 = IntVar<i32, U2, false>;
 pub type I2Var32 = IntVar<i32, U2, true>;
 pub type U3Var32 = IntVar<i32, U3, false>;
@@ -1429,6 +1431,8 @@ pub type I128Var32 = IntVar<i32, U128, true>;
 pub type UVarSys<N> = IntVar<isize, N, false>;
 pub type IVarSys<N> = IntVar<isize, N, true>;
 
+pub type U1VarSys = IntVar<isize, U1, false>;
+pub type I1VarSys = IntVar<isize, U1, true>;
 pub type U2VarSys = IntVar<isize, U2, false>;
 pub type I2VarSys = IntVar<isize, U2, true>;
 pub type U3VarSys = IntVar<isize, U3, false>;
