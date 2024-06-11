@@ -233,6 +233,19 @@ where
     }
 }
 
+impl<T> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    pub fn to_int1(self) -> IntVar<T, U1, false> {
+        IntVar::filled(self)
+    }
+}
+
 // TryFrom implementation
 macro_rules! impl_int_try_from {
     ($ty1:ty, $ty2: ty, $($gparams:ident),*) => {
