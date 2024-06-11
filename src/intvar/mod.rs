@@ -26,8 +26,6 @@ use generic_array::typenum::*;
 use generic_array::*;
 
 use crate::boolexpr::BoolExprNode;
-pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
-pub use crate::boolvar::{call32, callsys};
 use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
 use crate::gate::{Literal, VarLit};
 use crate::intexpr::{IntError, IntExprNode};
