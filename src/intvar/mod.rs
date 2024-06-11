@@ -1168,6 +1168,8 @@ where
         .collect::<Vec<_>>()
 }
 
+pub type IntVar16<N, const SIGN: bool> = IntVar<i16, N, SIGN>;
+
 pub type UVar16<N> = IntVar<i16, N, false>;
 pub type IVar16<N> = IntVar<i16, N, true>;
 
@@ -1428,6 +1430,8 @@ pub type I127Var16 = IntVar<i16, U127, true>;
 pub type U128Var16 = IntVar<i16, U128, false>;
 pub type I128Var16 = IntVar<i16, U128, true>;
 
+pub type IntVar32<N, const SIGN: bool> = IntVar<i32, N, SIGN>;
+
 pub type UVar32<N> = IntVar<i32, N, false>;
 pub type IVar32<N> = IntVar<i32, N, true>;
 
@@ -1687,6 +1691,8 @@ pub type U127Var32 = IntVar<i32, U127, false>;
 pub type I127Var32 = IntVar<i32, U127, true>;
 pub type U128Var32 = IntVar<i32, U128, false>;
 pub type I128Var32 = IntVar<i32, U128, true>;
+
+pub type IntVarSys<N, const SIGN: bool> = IntVar<isize, N, SIGN>;
 
 pub type UVarSys<N> = IntVar<isize, N, false>;
 pub type IVarSys<N> = IntVar<isize, N, true>;
