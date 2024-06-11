@@ -194,25 +194,23 @@ where
     }
 
     /// Creates integer of concatenation of self and `rest`.
-    pub fn concat<N2, IT>(self, rest: IT) -> IntVar<T, Sum<N, N2>, false>
+    pub fn concat<N2>(self, rest: IntVar<T, N2, false>) -> IntVar<T, Sum<N, N2>, false>
     where
         N: Add<N2>,
         N2: ArrayLength<usize>,
         Sum<N, N2>: ArrayLength<usize>,
-        IT: Into<IntVar<T, N2, false>>,
     {
-        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into().into()))
+        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into()))
     }
 
     /// Creates integer of concatenation of self and `rest`.
-    pub fn cat<N2, IT>(self, rest: IT) -> IntVar<T, Sum<N, N2>, false>
+    pub fn cat<N2>(self, rest: IntVar<T, N2, false>) -> IntVar<T, Sum<N, N2>, false>
     where
         N: Add<N2>,
         N2: ArrayLength<usize>,
         Sum<N, N2>: ArrayLength<usize>,
-        IT: Into<IntVar<T, N2, false>>,
     {
-        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into().into()))
+        IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into()))
     }
 
     /// Splits integer into two parts: the first with `K` bits and second with rest of bits.
