@@ -47,6 +47,21 @@ thread_local! {
         RefCell::new(None);
 }
 
+/// Get current ExprCreator. Panic if it not set.
+pub fn get_expr_creator_16() -> Rc<RefCell<ExprCreator<i16>>> {
+    EXPR_CREATOR_16.with_borrow(|ec| ec.as_ref().unwrap().clone())
+}
+
+/// Get current ExprCreator. Panic if it not set.
+pub fn get_expr_creator_32() -> Rc<RefCell<ExprCreator32>> {
+    EXPR_CREATOR_32.with_borrow(|ec| ec.as_ref().unwrap().clone())
+}
+
+/// Get current ExprCreator. Panic if it not set.
+pub fn get_expr_creator_sys() -> Rc<RefCell<ExprCreatorSys>> {
+    EXPR_CREATOR_SYS.with_borrow(|ec| ec.as_ref().unwrap().clone())
+}
+
 /// Call routine f that operates on expressions with new ExprCreator.
 /// Before call install new ExprCreator and after call uninstall ExprCreator.
 pub fn call16<F, R>(mut f: F) -> R
