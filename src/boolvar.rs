@@ -23,7 +23,8 @@ use std::fmt::Debug;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
 use std::rc::Rc;
 
-use crate::boolexpr::{BoolEqual, BoolExprNode, BoolImpl};
+use crate::boolexpr::BoolExprNode;
+pub use crate::boolexpr::{BoolEqual, BoolImpl};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::gate::{Literal, VarLit};
 use gatesim::Circuit;
@@ -194,6 +195,7 @@ macro_rules! var_impl {
         }
     };
 }
+var_impl!(i16, EXPR_CREATOR_16);
 var_impl!(i32, EXPR_CREATOR_32);
 var_impl!(isize, EXPR_CREATOR_SYS);
 
