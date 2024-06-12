@@ -28,7 +28,7 @@ use generic_array::*;
 
 use crate::boolexpr::{bool_ite, half_adder, BoolEqual, BoolExprNode, BoolImpl};
 use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
-use crate::dynintexpr::{DynIntExprNode, TryFromNSized};
+use crate::dynintexpr::{DynIntExprNode, TryFromNSized, TryIntConstantN};
 use crate::gate::{Literal, VarLit};
 use crate::int_utils::*;
 pub use crate::intexpr::{
@@ -273,3 +273,79 @@ where
         Self(DynIntExprNode::from(IntExprNode::from(v)))
     }
 }
+
+// integer conversion
+
+macro_rules! impl_int_conv {
+    ($t:ident, $creator:ident) => {
+        macro_rules! impl_int_try_from_u_n {
+            ($pty:ty) => {
+                impl TryFromNSized<$pty> for DynIntVar<$t, false> {
+                    type Error = IntError;
+                    fn try_from_n(v: $pty, n: usize) -> Result<Self, IntError> {
+                        $creator.with_borrow(|ec| {
+                            DynIntExprNode::<$t, false>::try_constant_n(ec.clone().unwrap(), n, v)
+                                .map(|x| Self(x))
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_upty!(impl_int_try_from_u_n);
+
+        macro_rules! impl_int_try_from_i_n {
+            ($pty:ty) => {
+                impl TryFromNSized<$pty> for DynIntVar<$t, true> {
+                    type Error = IntError;
+                    fn try_from_n(v: $pty, n: usize) -> Result<Self, IntError> {
+                        $creator.with_borrow(|ec| {
+                            DynIntExprNode::<$t, true>::try_constant_n(ec.clone().unwrap(), n, v)
+                                .map(|x| Self(x))
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_ipty!(impl_int_try_from_i_n);
+    };
+}
+
+impl_int_conv!(i16, EXPR_CREATOR_16);
+impl_int_conv!(i32, EXPR_CREATOR_32);
+impl_int_conv!(isize, EXPR_CREATOR_SYS);
+
+impl<'a, T, const SIGN: bool> BitVal for &'a DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = BoolVar<T>;
+
+    fn bitnum(self) -> usize {
+        self.0.bitnum()
+    }
+
+    fn bit(self, x: usize) -> Self::Output {
+        BoolVar::from(self.0.bit(x))
+    }
+}
+
+// types
+
+/// DynIntExprNode for unsinged integer.
+pub type UDynVar16 = DynIntVar<i16, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVar16 = DynIntVar<i16, true>;
+/// DynIntExprNode for unsinged integer.
+pub type UDynVar32 = DynIntVar<i32, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVar32 = DynIntVar<i32, true>;
+/// DynIntExprNode for unsinged integer.
+pub type UDynVarSys = DynIntVar<isize, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVarSys = DynIntVar<isize, true>;
