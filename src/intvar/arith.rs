@@ -21,7 +21,6 @@
 //! The module contains binary operators definitions.
 
 use std::fmt::Debug;
-use std::iter;
 use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
 use std::ops::{Div, Rem};
 use std::ops::{Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
@@ -31,7 +30,7 @@ use generic_array::*;
 
 use super::*;
 use crate::VarLit;
-use crate::{impl_int_ipty, impl_int_ipty_ty1, impl_int_upty, impl_int_upty_ty1};
+use crate::{impl_int_ipty, impl_int_upty};
 
 impl<T, N: ArrayLength<usize>> IntVar<T, N, true>
 where
