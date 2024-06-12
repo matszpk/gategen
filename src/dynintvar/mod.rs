@@ -465,6 +465,184 @@ where
     }
 }
 
+macro_rules! int_equal_uint_x_sign {
+    ($pty:ty, $sign:expr) => {
+        impl<T> IntEqual<$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.equal(r)
+            }
+
+            fn nequal(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.nequal(r)
+            }
+        }
+        impl<T> IntEqual<&$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.equal(r)
+            }
+
+            fn nequal(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.nequal(r)
+            }
+        }
+        impl<T> IntEqual<$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: $pty) -> Self::Output {
+                self.equal(self.constant(rhs))
+            }
+
+            fn nequal(self, rhs: $pty) -> Self::Output {
+                self.nequal(self.constant(rhs))
+            }
+        }
+        impl<T> IntEqual<&$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: &$pty) -> Self::Output {
+                self.equal(self.constant(*rhs))
+            }
+
+            fn nequal(self, rhs: &$pty) -> Self::Output {
+                self.nequal(self.constant(*rhs))
+            }
+        }
+
+        impl<T> IntEqual<DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).equal(rhs)
+            }
+
+            fn nequal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).nequal(rhs)
+            }
+        }
+        impl<T> IntEqual<&DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).equal(rhs)
+            }
+
+            fn nequal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).nequal(rhs)
+            }
+        }
+        impl<T> IntEqual<DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).equal(rhs)
+            }
+
+            fn nequal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).nequal(rhs)
+            }
+        }
+        impl<T> IntEqual<&DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).equal(rhs)
+            }
+
+            fn nequal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).nequal(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! int_equal_uint_x_unsigned {
+    ($pty:ty) => {
+        int_equal_uint_x_sign!($pty, false);
+    };
+}
+
+impl_int_upty!(int_equal_uint_x_unsigned);
+
+macro_rules! int_equal_uint_x_signed {
+    ($pty:ty) => {
+        int_equal_uint_x_sign!($pty, true);
+    };
+}
+
+impl_int_ipty!(int_equal_uint_x_signed);
+
 // types
 
 /// DynIntExprNode for unsinged integer.
