@@ -349,3 +349,81 @@ pub type IDynVar32 = DynIntVar<i32, true>;
 pub type UDynVarSys = DynIntVar<isize, false>;
 /// DynIntExprNode for singed integer.
 pub type IDynVarSys = DynIntVar<isize, true>;
+
+// IntEqual
+
+impl<T, const SIGN: bool> IntEqual for DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.equal(rhs.0))
+    }
+
+    fn nequal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.nequal(rhs.0))
+    }
+}
+
+impl<T, const SIGN: bool> IntEqual<DynIntVar<T, SIGN>> for &DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.clone().equal(rhs.0))
+    }
+
+    fn nequal(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.clone().nequal(rhs.0))
+    }
+}
+
+impl<T, const SIGN: bool> IntEqual<&DynIntVar<T, SIGN>> for DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.equal(rhs.0.clone()))
+    }
+
+    fn nequal(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
+        BoolVar::from(self.0.nequal(rhs.0.clone()))
+    }
+}
+
+impl<T, const SIGN: bool> IntEqual for &DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = BoolVar<T>;
+
+    fn equal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.clone().equal(rhs.0.clone()))
+    }
+
+    fn nequal(self, rhs: Self) -> Self::Output {
+        BoolVar::from(self.0.clone().nequal(rhs.0.clone()))
+    }
+}
