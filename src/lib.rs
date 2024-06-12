@@ -50,6 +50,7 @@ pub mod boolexpr_creator;
 pub mod boolvar;
 
 pub mod dynintexpr;
+pub mod dynintvar;
 mod int_utils;
 pub mod intexpr;
 mod intmacros;
