@@ -22,15 +22,13 @@ use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Neg;
-use std::rc::Rc;
 
 use generic_array::*;
 
-use crate::boolexpr::{bool_ite, half_adder, BoolEqual, BoolExprNode, BoolImpl};
+use crate::boolexpr::BoolExprNode;
 use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
 use crate::dynintexpr::{DynIntExprNode, TryFromNSized, TryIntConstantN};
 use crate::gate::{Literal, VarLit};
-use crate::int_utils::*;
 pub use crate::intexpr::{
     BitVal, DivMod, ExtraOps, FullMul, IntCondAdd, IntCondMul, IntCondNeg, IntCondShl, IntCondShr,
     IntCondSub, IntEqual, IntError, IntExprNode, IntModAdd, IntModAddAssign, IntModMul,
