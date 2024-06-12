@@ -276,45 +276,97 @@ where
 
 // integer conversion
 
+pub trait FromNSized<T>: Sized {
+    /// Convert from input. `n` is number of bits of destination.
+    fn from_n(input: T, n: usize) -> Self;
+}
+
 macro_rules! impl_int_conv {
     ($t:ident, $creator:ident) => {
-        macro_rules! impl_int_try_from_u_n {
+        macro_rules! impl_int_from_u_n {
             ($pty:ty) => {
-                impl TryFromNSized<$pty> for DynIntVar<$t, false> {
-                    type Error = IntError;
-                    fn try_from_n(v: $pty, n: usize) -> Result<Self, IntError> {
+                impl FromNSized<$pty> for DynIntVar<$t, false> {
+                    fn from_n(v: $pty, n: usize) -> Self {
                         $creator.with_borrow(|ec| {
                             DynIntExprNode::<$t, false>::try_constant_n(ec.clone().unwrap(), n, v)
                                 .map(|x| Self(x))
+                                .unwrap()
                         })
                     }
                 }
             };
         }
 
-        impl_int_upty!(impl_int_try_from_u_n);
+        impl_int_upty!(impl_int_from_u_n);
 
-        macro_rules! impl_int_try_from_i_n {
+        macro_rules! impl_int_from_i_n {
             ($pty:ty) => {
-                impl TryFromNSized<$pty> for DynIntVar<$t, true> {
-                    type Error = IntError;
-                    fn try_from_n(v: $pty, n: usize) -> Result<Self, IntError> {
+                impl FromNSized<$pty> for DynIntVar<$t, true> {
+                    fn from_n(v: $pty, n: usize) -> Self {
                         $creator.with_borrow(|ec| {
                             DynIntExprNode::<$t, true>::try_constant_n(ec.clone().unwrap(), n, v)
                                 .map(|x| Self(x))
+                                .unwrap()
                         })
                     }
                 }
             };
         }
 
-        impl_int_ipty!(impl_int_try_from_i_n);
+        impl_int_ipty!(impl_int_from_i_n);
     };
 }
 
 impl_int_conv!(i16, EXPR_CREATOR_16);
 impl_int_conv!(i32, EXPR_CREATOR_32);
 impl_int_conv!(isize, EXPR_CREATOR_SYS);
+
+/// Allow to create constant sized from self
+pub trait SelfConstant<T>: Sized {
+    fn constant(&self, v: T) -> Self;
+}
+
+macro_rules! impl_int_conv_self {
+    ($t:ident, $creator:ident) => {
+        macro_rules! impl_int_uconstant_n {
+            ($pty:ty) => {
+                impl SelfConstant<$pty> for DynIntVar<$t, false> {
+                    fn constant(&self, v: $pty) -> Self {
+                        let n = self.bitnum();
+                        $creator.with_borrow(|ec| {
+                            DynIntExprNode::<$t, false>::try_constant_n(ec.clone().unwrap(), n, v)
+                                .map(|x| Self(x))
+                                .unwrap()
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_upty!(impl_int_uconstant_n);
+
+        macro_rules! impl_int_iconstant_n {
+            ($pty:ty) => {
+                impl SelfConstant<$pty> for DynIntVar<$t, true> {
+                    fn constant(&self, v: $pty) -> Self {
+                        let n = self.bitnum();
+                        $creator.with_borrow(|ec| {
+                            DynIntExprNode::<$t, true>::try_constant_n(ec.clone().unwrap(), n, v)
+                                .map(|x| Self(x))
+                                .unwrap()
+                        })
+                    }
+                }
+            };
+        }
+
+        impl_int_ipty!(impl_int_iconstant_n);
+    };
+}
+
+impl_int_conv_self!(i16, EXPR_CREATOR_16);
+impl_int_conv_self!(i32, EXPR_CREATOR_32);
+impl_int_conv_self!(isize, EXPR_CREATOR_SYS);
 
 impl<'a, T, const SIGN: bool> BitVal for &'a DynIntVar<T, SIGN>
 where
@@ -334,21 +386,6 @@ where
         BoolVar::from(self.0.bit(x))
     }
 }
-
-// types
-
-/// DynIntExprNode for unsinged integer.
-pub type UDynVar16 = DynIntVar<i16, false>;
-/// DynIntExprNode for singed integer.
-pub type IDynVar16 = DynIntVar<i16, true>;
-/// DynIntExprNode for unsinged integer.
-pub type UDynVar32 = DynIntVar<i32, false>;
-/// DynIntExprNode for singed integer.
-pub type IDynVar32 = DynIntVar<i32, true>;
-/// DynIntExprNode for unsinged integer.
-pub type UDynVarSys = DynIntVar<isize, false>;
-/// DynIntExprNode for singed integer.
-pub type IDynVarSys = DynIntVar<isize, true>;
 
 // IntEqual
 
@@ -427,3 +464,18 @@ where
         BoolVar::from(self.0.clone().nequal(rhs.0.clone()))
     }
 }
+
+// types
+
+/// DynIntExprNode for unsinged integer.
+pub type UDynVar16 = DynIntVar<i16, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVar16 = DynIntVar<i16, true>;
+/// DynIntExprNode for unsinged integer.
+pub type UDynVar32 = DynIntVar<i32, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVar32 = DynIntVar<i32, true>;
+/// DynIntExprNode for unsinged integer.
+pub type UDynVarSys = DynIntVar<isize, false>;
+/// DynIntExprNode for singed integer.
+pub type IDynVarSys = DynIntVar<isize, true>;
