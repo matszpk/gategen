@@ -1112,6 +1112,36 @@ where
 
 /// Returns result of indexing of table with values.
 ///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn int_table_partial<T, N, K, I, ITP, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    table_iter: I,
+    fill: IntVar<T, N, SIGN>,
+) -> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<IntVar<T, N, SIGN>>,
+    I: IntoIterator<Item = ITP>,
+{
+    IntVar::<T, N, SIGN>(intexpr::int_table(
+        index.into(),
+        table_iter
+            .into_iter()
+            .map(|x| x.into().into())
+            .chain(std::iter::repeat(fill.into()).take(1usize << K::USIZE)),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
 pub fn int_booltable<T, N, K, I, ITP, const SIGN: bool>(
@@ -1132,6 +1162,37 @@ where
     BoolVar::<T>::from(intexpr::int_booltable(
         index.into(),
         table_iter.into_iter().map(|x| x.into().into()),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn int_booltable_partial<T, N, K, I, ITP, BTP, const SIGN: bool>(
+    index: IntVar<T, K, SIGN>,
+    table_iter: I,
+    fill: BTP,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<BoolVar<T>>,
+    I: IntoIterator<Item = ITP>,
+    BTP: Into<BoolVar<T>>,
+{
+    BoolVar::<T>::from(intexpr::int_booltable(
+        index.into(),
+        table_iter
+            .into_iter()
+            .map(|x| x.into().into())
+            .chain(std::iter::repeat(fill.into().into()).take(1usize << K::USIZE)),
     ))
 }
 
@@ -1177,6 +1238,141 @@ where
         .into_iter()
         .map(|x| x.into())
         .collect::<Vec<_>>()
+}
+
+// version with references
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_table_r<T, N, K, I, ITP, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    table_iter: I,
+) -> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<IntVar<T, N, SIGN>>,
+    I: IntoIterator<Item = ITP>,
+{
+    int_table(index.clone(), table_iter)
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn int_table_partial_r<T, N, K, I, ITP, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    table_iter: I,
+    fill: &IntVar<T, N, SIGN>,
+) -> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<IntVar<T, N, SIGN>>,
+    I: IntoIterator<Item = ITP>,
+{
+    int_table_partial(index.clone(), table_iter, fill.clone())
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_booltable_r<T, N, K, I, ITP, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    table_iter: I,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<BoolVar<T>>,
+    I: IntoIterator<Item = ITP>,
+{
+    int_booltable::<T, N, K, I, ITP, SIGN>(index.clone(), table_iter)
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn int_booltable_partial_r<T, N, K, I, ITP, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    table_iter: I,
+    fill: &BoolVar<T>,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    ITP: Into<BoolVar<T>>,
+    I: IntoIterator<Item = ITP>,
+{
+    int_booltable_partial::<T, N, K, I, ITP, BoolVar<T>, SIGN>(
+        index.clone(),
+        table_iter,
+        fill.clone(),
+    )
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn int_demux_r<T, N, K, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    value: &IntVar<T, N, SIGN>,
+) -> Vec<IntVar<T, N, SIGN>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+{
+    int_demux(index.clone(), value.clone())
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn int_booldemux_r<T, K, BTP, const SIGN: bool>(
+    index: &IntVar<T, K, SIGN>,
+    value: &BoolVar<T>,
+) -> Vec<BoolVar<T>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    K: ArrayLength<usize>,
+{
+    int_booldemux(index.clone(), value.clone())
 }
 
 pub type IntVar16<N, const SIGN: bool> = IntVar<i16, N, SIGN>;
