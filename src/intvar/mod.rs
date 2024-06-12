@@ -1344,7 +1344,7 @@ where
 /// Demulitplexer - returns list of outputs of demulitplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
-pub fn int_booldemux_r<T, K, BTP, const SIGN: bool>(
+pub fn int_booldemux_r<T, K, const SIGN: bool>(
     index: &IntVar<T, K, SIGN>,
     value: &BoolVar<T>,
 ) -> Vec<BoolVar<T>>
