@@ -1341,7 +1341,7 @@ new_shiftop_impl!(IntRor, rotate_right, impl_ror_imm);
 
 // CondShifts
 macro_rules! new_condshiftop_impl {
-    ($t:ident, $u:ident, $mimm:ident, $mselfimm:ident) => {
+    ($t:ident, $u:ident, $mselfimm:ident) => {
         impl<T, N, N2, const SIGN: bool, const SIGN2: bool> $t<IntVar<T, N2, SIGN2>>
             for IntVar<T, N, SIGN>
         where
@@ -1538,8 +1538,8 @@ macro_rules! new_condshiftop_impl {
     };
 }
 
-new_condshiftop_impl!(IntCondShl, cond_shl, cond_shl_imm, cond_shl_self_imm);
-new_condshiftop_impl!(IntCondShr, cond_shr, cond_shr_imm, cond_shr_self_imm);
+new_condshiftop_impl!(IntCondShl, cond_shl, cond_shl_self_imm);
+new_condshiftop_impl!(IntCondShr, cond_shr, cond_shr_self_imm);
 
 // Shift assigns
 macro_rules! impl_int_shx_assign {
