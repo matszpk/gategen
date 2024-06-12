@@ -1006,7 +1006,294 @@ macro_rules! int_ord_uint_x_signed {
 
 impl_int_ipty!(int_ord_uint_x_signed);
 
+// int_ite, tables, demux
+
+pub fn dynint_ite<T, const SIGN: bool>(
+    c: BoolVar<T>,
+    t: DynIntVar<T, SIGN>,
+    e: DynIntVar<T, SIGN>,
+) -> DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    DynIntVar(dynintexpr::dynint_ite(BoolExprNode::from(c), t.0, e.0))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn dynint_table<T, I, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    table_iter: I,
+) -> DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = DynIntVar<T, SIGN>>,
+{
+    DynIntVar::<T, SIGN>(dynintexpr::dynint_table(
+        index.into(),
+        table_iter.into_iter().map(|x| x.into()),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn dynint_table_partial<T, I, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    table_iter: I,
+    fill: DynIntVar<T, SIGN>,
+) -> DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = DynIntVar<T, SIGN>>,
+{
+    let k = index.bitnum();
+    let tbl = table_iter
+        .into_iter()
+        .take(1 << k)
+        .map(|x| x.into())
+        .collect::<Vec<_>>();
+    let tbl_len = tbl.len();
+    DynIntVar::<T, SIGN>(dynintexpr::dynint_table(
+        index.into(),
+        tbl.into_iter()
+            .chain(std::iter::repeat(fill.into()).take((1 << k) - tbl_len)),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn dynint_booltable<T, I, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    table_iter: I,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = BoolVar<T>>,
+{
+    BoolVar::<T>::from(dynintexpr::dynint_booltable(
+        index.into(),
+        table_iter.into_iter().map(|x| x.into()),
+    ))
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn dynint_booltable_partial<T, I, BTP, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    table_iter: I,
+    fill: BTP,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = BoolVar<T>>,
+    BTP: Into<BoolVar<T>>,
+{
+    let k = index.bitnum();
+    let tbl = table_iter
+        .into_iter()
+        .take(1 << k)
+        .map(|x| x.into())
+        .collect::<Vec<_>>();
+    let tbl_len = tbl.len();
+    BoolVar::<T>::from(dynintexpr::dynint_booltable(
+        index.into(),
+        tbl.into_iter()
+            .chain(std::iter::repeat(fill.into().into()).take((1 << k) - tbl_len)),
+    ))
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_demux<T, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    value: DynIntVar<T, SIGN>,
+) -> Vec<DynIntVar<T, SIGN>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    dynintexpr::dynint_demux(index.into(), value.into())
+        .into_iter()
+        .map(|x| x.into())
+        .collect::<Vec<_>>()
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_booldemux<T, BTP, const SIGN: bool>(
+    index: DynIntVar<T, SIGN>,
+    value: BTP,
+) -> Vec<BoolVar<T>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    BTP: Into<BoolVar<T>>,
+{
+    dynintexpr::dynint_booldemux(index.into(), value.into().into())
+        .into_iter()
+        .map(|x| x.into())
+        .collect::<Vec<_>>()
+}
+
+// version with references
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn dynint_table_r<T, I, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    table_iter: I,
+) -> DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = DynIntVar<T, SIGN>>,
+{
+    dynint_table(index.clone(), table_iter)
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn dynint_table_partial_r<T, I, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    table_iter: I,
+    fill: &DynIntVar<T, SIGN>,
+) -> DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = DynIntVar<T, SIGN>>,
+{
+    dynint_table_partial(index.clone(), table_iter, fill.clone())
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn dynint_booltable_r<T, I, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    table_iter: I,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = BoolVar<T>>,
+{
+    dynint_booltable::<T, I, SIGN>(index.clone(), table_iter)
+}
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions. Table can have partial length. fill - is item to fill rest of
+/// required space in table.
+pub fn dynint_booltable_partial_r<T, I, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    table_iter: I,
+    fill: &BoolVar<T>,
+) -> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: IntoIterator<Item = BoolVar<T>>,
+{
+    dynint_booltable_partial::<T, I, BoolVar<T>, SIGN>(index.clone(), table_iter, fill.clone())
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_demux_r<T, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    value: &DynIntVar<T, SIGN>,
+) -> Vec<DynIntVar<T, SIGN>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    dynint_demux(index.clone(), value.clone())
+}
+
+/// Demulitplexer - returns list of outputs of demulitplexer.
+///
+/// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
+pub fn dynint_booldemux_r<T, const SIGN: bool>(
+    index: &DynIntVar<T, SIGN>,
+    value: &BoolVar<T>,
+) -> Vec<BoolVar<T>>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    dynint_booldemux(index.clone(), value.clone())
+}
+
 // types
+
+pub type DynIntVar16<const SIGN: bool> = DynIntVar<i16, SIGN>;
+pub type DynIntVar32<const SIGN: bool> = DynIntVar<i32, SIGN>;
+pub type DynIntVarSys<const SIGN: bool> = DynIntVar<isize, SIGN>;
 
 /// DynIntExprNode for unsinged integer.
 pub type UDynVar16 = DynIntVar<i16, false>;
