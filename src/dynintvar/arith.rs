@@ -665,8 +665,7 @@ new_opassign_impl!(
 
 macro_rules! new_condop_impl {
     ($t:ident, $u:ident, $v:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
-        impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>>
-            for DynIntVar<T, SIGN>
+        impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>> for DynIntVar<T, SIGN>
         where
             T: VarLit + Neg<Output = T> + Debug,
             isize: TryFrom<T>,
@@ -681,8 +680,7 @@ macro_rules! new_condop_impl {
                 (DynIntVar(r), c.into())
             }
         }
-        impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>>
-            for DynIntVar<T, SIGN>
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for DynIntVar<T, SIGN>
         where
             T: VarLit + Neg<Output = T> + Debug,
             isize: TryFrom<T>,
@@ -697,8 +695,7 @@ macro_rules! new_condop_impl {
                 (DynIntVar(r), c.into())
             }
         }
-        impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>>
-            for &DynIntVar<T, SIGN>
+        impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>> for &DynIntVar<T, SIGN>
         where
             T: VarLit + Neg<Output = T> + Debug,
             isize: TryFrom<T>,
@@ -713,8 +710,7 @@ macro_rules! new_condop_impl {
                 (DynIntVar(r), c.into())
             }
         }
-        impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>>
-            for &DynIntVar<T, SIGN>
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for &DynIntVar<T, SIGN>
         where
             T: VarLit + Neg<Output = T> + Debug,
             isize: TryFrom<T>,
@@ -1100,3 +1096,785 @@ macro_rules! condmul_ipty {
 
 impl_int_upty!(condmul_upty);
 impl_int_ipty!(condmul_ipty);
+
+// shifts
+// shifts
+
+// Fullmul
+macro_rules! impl_fullmul_sign {
+    ($sign:expr) => {
+        impl<T> FullMul<DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+
+            fn fullmul(self, rhs: Self) -> Self::Output {
+                DynIntVar::<T, $sign>(self.0.fullmul(rhs.0))
+            }
+        }
+        impl<T> FullMul<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+
+            fn fullmul(self, rhs: &Self) -> Self::Output {
+                DynIntVar::<T, $sign>(self.0.fullmul(rhs.0.clone()))
+            }
+        }
+        impl<T> FullMul<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+
+            fn fullmul(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                DynIntVar::<T, $sign>(self.0.clone().fullmul(rhs.0))
+            }
+        }
+        impl<T> FullMul<&DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+
+            fn fullmul(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                DynIntVar::<T, $sign>(self.0.clone().fullmul(rhs.0.clone()))
+            }
+        }
+    };
+}
+
+impl_fullmul_sign!(false);
+impl_fullmul_sign!(true);
+
+macro_rules! impl_int_fullmul_pty {
+    ($sign:expr, $pty:ty) => {
+        impl<T> FullMul<$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.fullmul(r)
+            }
+        }
+        impl<T> FullMul<&$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.fullmul(r)
+            }
+        }
+        impl<T> FullMul<$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: $pty) -> Self::Output {
+                self.fullmul(self.constant(rhs))
+            }
+        }
+        impl<T> FullMul<&$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: &$pty) -> Self::Output {
+                self.fullmul(self.constant(*rhs))
+            }
+        }
+
+        impl<T> FullMul<DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).fullmul(rhs)
+            }
+        }
+        impl<T> FullMul<&DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).fullmul(rhs.clone())
+            }
+        }
+        impl<T> FullMul<DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).fullmul(rhs)
+            }
+        }
+        impl<T> FullMul<&DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            fn fullmul(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).fullmul(rhs.clone())
+            }
+        }
+    };
+}
+
+macro_rules! impl_int_fullmul_upty {
+    ($pty:ty) => {
+        impl_int_fullmul_pty!(false, $pty);
+    };
+}
+macro_rules! impl_int_fullmul_ipty {
+    ($pty:ty) => {
+        impl_int_fullmul_pty!(true, $pty);
+    };
+}
+impl_int_upty!(impl_int_fullmul_upty);
+impl_int_ipty!(impl_int_fullmul_ipty);
+
+// DivMod
+macro_rules! impl_divmod_sign {
+    ($sign:expr) => {
+        impl<T> DivMod<DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: Self) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.divmod(rhs.0);
+                (Self(d), Self(m), c.into())
+            }
+        }
+        impl<T> DivMod<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &Self) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.divmod(rhs.0.clone());
+                (Self(d), Self(m), c.into())
+            }
+        }
+        impl<T> DivMod<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.clone().divmod(rhs.0);
+                (DynIntVar(d), DynIntVar(m), c.into())
+            }
+        }
+        impl<T> DivMod<&DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let (d, m, c) = self.0.clone().divmod(rhs.0.clone());
+                (DynIntVar(d), DynIntVar(m), c.into())
+            }
+        }
+    };
+}
+
+impl_divmod_sign!(false);
+impl_divmod_sign!(true);
+
+macro_rules! impl_int_divmod_pty {
+    ($sign:expr, $pty:ty) => {
+        impl<T> DivMod<$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: $pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let r = self.constant(rhs);
+                self.divmod(r)
+            }
+        }
+        impl<T> DivMod<&$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &$pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                let r = self.constant(*rhs);
+                self.divmod(r)
+            }
+        }
+        impl<T> DivMod<$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: $pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(self.constant(rhs))
+            }
+        }
+        impl<T> DivMod<&$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(self, rhs: &$pty) -> (Self::Output, Self::Output, Self::OutputCond) {
+                self.divmod(self.constant(*rhs))
+            }
+        }
+
+        impl<T> DivMod<DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                rhs.constant(self).divmod(rhs)
+            }
+        }
+        impl<T> DivMod<&DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                rhs.constant(self).divmod(rhs.clone())
+            }
+        }
+        impl<T> DivMod<DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                rhs.constant(*self).divmod(rhs)
+            }
+        }
+        impl<T> DivMod<&DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn divmod(
+                self,
+                rhs: &DynIntVar<T, $sign>,
+            ) -> (Self::Output, Self::Output, Self::OutputCond) {
+                rhs.constant(*self).divmod(rhs.clone())
+            }
+        }
+    };
+}
+
+macro_rules! impl_int_divmod_upty {
+    ($pty:ty) => {
+        impl_int_divmod_pty!(false, $pty);
+    };
+}
+macro_rules! impl_int_divmod_ipty {
+    ($pty:ty) => {
+        impl_int_divmod_pty!(true, $pty);
+    };
+}
+impl_int_upty!(impl_int_divmod_upty);
+impl_int_ipty!(impl_int_divmod_ipty);
+
+// Division and remainder
+
+macro_rules! impl_int_div_mod {
+    ($sign:expr) => {
+        impl<T> Div<DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn div(self, rhs: Self) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T> Div<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn div(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T> Div<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+            fn div(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+        impl<T> Div<&DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+            fn div(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                let (d, _, c) = self.divmod(rhs);
+                (d, c)
+            }
+        }
+
+        impl<T> Rem<DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn rem(self, rhs: Self) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T> Rem<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (Self, BoolVar<T>);
+            fn rem(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T> Rem<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+            fn rem(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+        impl<T> Rem<&DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+            fn rem(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                let (_, r, c) = self.divmod(rhs);
+                (r, c)
+            }
+        }
+    };
+}
+
+impl_int_div_mod!(false);
+impl_int_div_mod!(true);
+
+macro_rules! impl_int_div_mod_op {
+    ($trait:ident, $op:ident, $macro_gen:ident, $macro_upty:ident, $macro_ipty:ident) => {
+        macro_rules! $macro_gen {
+            ($sign:expr, $pty:ty) => {
+                impl<T> $trait<$pty> for DynIntVar<T, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (Self, BoolVar<T>);
+                    fn $op(self, rhs: $pty) -> Self::Output {
+                        let r = self.constant(rhs);
+                        self.$op(r)
+                    }
+                }
+                impl<T> $trait<&$pty> for DynIntVar<T, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (Self, BoolVar<T>);
+                    fn $op(self, rhs: &$pty) -> Self::Output {
+                        let r = self.constant(*rhs);
+                        self.$op(r)
+                    }
+                }
+                impl<T> $trait<$pty> for &DynIntVar<T, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: $pty) -> Self::Output {
+                        self.$op(self.constant(rhs))
+                    }
+                }
+                impl<T> $trait<&$pty> for &DynIntVar<T, $sign>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &$pty) -> Self::Output {
+                        self.$op(self.constant(*rhs))
+                    }
+                }
+
+                impl<T> $trait<DynIntVar<T, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                        rhs.constant(self).$op(rhs)
+                    }
+                }
+                impl<T> $trait<&DynIntVar<T, $sign>> for $pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                        rhs.constant(self).$op(rhs)
+                    }
+                }
+                impl<T> $trait<DynIntVar<T, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                        rhs.constant(*self).$op(rhs)
+                    }
+                }
+                impl<T> $trait<&DynIntVar<T, $sign>> for &$pty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: SelfConstant<$pty>,
+                {
+                    type Output = (DynIntVar<T, $sign>, BoolVar<T>);
+                    fn $op(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                        rhs.constant(*self).$op(rhs)
+                    }
+                }
+            };
+        }
+
+        macro_rules! $macro_upty {
+            ($pty:ty) => {
+                $macro_gen!(false, $pty);
+            };
+        }
+        macro_rules! $macro_ipty {
+            ($pty:ty) => {
+                $macro_gen!(true, $pty);
+            };
+        }
+
+        impl_int_upty!($macro_upty);
+        impl_int_ipty!($macro_ipty);
+    };
+}
+
+impl_int_div_mod_op!(Div, div, int_div_pty, int_div_upty, int_div_ipty);
+impl_int_div_mod_op!(Rem, rem, int_rem_pty, int_rem_upty, int_rem_ipty);
+
+// Extra arith
+impl<T, const SIGN: bool> ExtraOps for DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = Self;
+    type BoolOutput = BoolVar<T>;
+
+    fn count_zeros(self) -> Self::Output {
+        Self(self.0.count_zeros())
+    }
+
+    fn count_ones(self) -> Self::Output {
+        Self(self.0.count_ones())
+    }
+
+    fn leading_zeros(self) -> Self::Output {
+        Self(self.0.leading_zeros())
+    }
+
+    fn leading_ones(self) -> Self::Output {
+        Self(self.0.leading_ones())
+    }
+
+    fn trailing_zeros(self) -> Self::Output {
+        Self(self.0.trailing_zeros())
+    }
+
+    fn trailing_ones(self) -> Self::Output {
+        Self(self.0.trailing_ones())
+    }
+
+    fn is_power_of_two(self) -> Self::BoolOutput {
+        self.0.is_power_of_two().into()
+    }
+
+    fn reverse_bits(self) -> Self::Output {
+        Self(self.0.reverse_bits())
+    }
+}
+
+impl<T, const SIGN: bool> ExtraOps for &DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    type Output = DynIntVar<T, SIGN>;
+    type BoolOutput = BoolVar<T>;
+
+    fn count_zeros(self) -> Self::Output {
+        DynIntVar(self.0.clone().count_zeros())
+    }
+
+    fn count_ones(self) -> Self::Output {
+        DynIntVar(self.0.clone().count_ones())
+    }
+
+    fn leading_zeros(self) -> Self::Output {
+        DynIntVar(self.0.clone().leading_zeros())
+    }
+
+    fn leading_ones(self) -> Self::Output {
+        DynIntVar(self.0.clone().leading_ones())
+    }
+
+    fn trailing_zeros(self) -> Self::Output {
+        DynIntVar(self.0.clone().trailing_zeros())
+    }
+
+    fn trailing_ones(self) -> Self::Output {
+        DynIntVar(self.0.clone().trailing_ones())
+    }
+
+    fn is_power_of_two(self) -> Self::BoolOutput {
+        self.0.clone().is_power_of_two().into()
+    }
+
+    fn reverse_bits(self) -> Self::Output {
+        DynIntVar(self.0.clone().reverse_bits())
+    }
+}
