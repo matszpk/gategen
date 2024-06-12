@@ -18,7 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module contains binary operators definitions.
+//! The module contains operators definitions.
 
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};

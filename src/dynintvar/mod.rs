@@ -40,10 +40,8 @@ use gatesim::Circuit;
 
 use crate::dynintexpr;
 
-// pub mod arith;
-// pub use arith::*;
-// pub mod extra_arith;
-// pub use extra_arith::*;
+pub mod arith;
+pub use arith::*;
 
 /// The main structure that represents integer expression, subexpression or integer value.
 ///
