@@ -643,6 +643,369 @@ macro_rules! int_equal_uint_x_signed {
 
 impl_int_ipty!(int_equal_uint_x_signed);
 
+// IntOrd
+
+macro_rules! impl_selfxint_ord {
+    ($sign:expr) => {
+        impl<T> IntOrd for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.less_than(rhs.0))
+            }
+
+            fn less_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.less_equal(rhs.0))
+            }
+
+            fn greater_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.greater_than(rhs.0))
+            }
+
+            fn greater_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.greater_equal(rhs.0))
+            }
+        }
+
+        impl<T> IntOrd<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().less_than(rhs.0))
+            }
+
+            fn less_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().less_equal(rhs.0))
+            }
+
+            fn greater_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_than(rhs.0))
+            }
+
+            fn greater_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_equal(rhs.0))
+            }
+        }
+
+        impl<T> IntOrd<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.less_than(rhs.0.clone()))
+            }
+
+            fn less_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.less_equal(rhs.0.clone()))
+            }
+
+            fn greater_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.greater_than(rhs.0.clone()))
+            }
+
+            fn greater_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                BoolVar::from(self.0.greater_equal(rhs.0.clone()))
+            }
+        }
+
+        impl<T> IntOrd for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().less_than(rhs.0.clone()))
+            }
+
+            fn less_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().less_equal(rhs.0.clone()))
+            }
+
+            fn greater_than(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_than(rhs.0.clone()))
+            }
+
+            fn greater_equal(self, rhs: Self) -> Self::Output {
+                BoolVar::from(self.0.clone().greater_equal(rhs.0.clone()))
+            }
+        }
+    };
+}
+
+impl_selfxint_ord!(false);
+impl_selfxint_ord!(true);
+
+macro_rules! int_ord_uint_x_sign {
+    ($pty:ty, $sign:expr) => {
+        impl<T> IntOrd<$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.less_than(r)
+            }
+
+            fn less_equal(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.less_equal(r)
+            }
+
+            fn greater_than(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.greater_than(r)
+            }
+
+            fn greater_equal(self, rhs: $pty) -> Self::Output {
+                let r = self.constant(rhs);
+                self.greater_equal(r)
+            }
+        }
+        impl<T> IntOrd<&$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.less_than(r)
+            }
+
+            fn less_equal(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.less_equal(r)
+            }
+
+            fn greater_than(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.greater_than(r)
+            }
+
+            fn greater_equal(self, rhs: &$pty) -> Self::Output {
+                let r = self.constant(*rhs);
+                self.greater_equal(r)
+            }
+        }
+        impl<T> IntOrd<$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: $pty) -> Self::Output {
+                self.less_than(self.constant(rhs))
+            }
+
+            fn less_equal(self, rhs: $pty) -> Self::Output {
+                self.less_equal(self.constant(rhs))
+            }
+
+            fn greater_than(self, rhs: $pty) -> Self::Output {
+                self.greater_than(self.constant(rhs))
+            }
+
+            fn greater_equal(self, rhs: $pty) -> Self::Output {
+                self.greater_equal(self.constant(rhs))
+            }
+        }
+        impl<T> IntOrd<&$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &$pty) -> Self::Output {
+                self.less_than(self.constant(*rhs))
+            }
+
+            fn less_equal(self, rhs: &$pty) -> Self::Output {
+                self.less_equal(self.constant(*rhs))
+            }
+
+            fn greater_than(self, rhs: &$pty) -> Self::Output {
+                self.greater_than(self.constant(*rhs))
+            }
+
+            fn greater_equal(self, rhs: &$pty) -> Self::Output {
+                self.greater_equal(self.constant(*rhs))
+            }
+        }
+
+        impl<T> IntOrd<DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).less_than(rhs)
+            }
+
+            fn less_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).less_equal(rhs)
+            }
+
+            fn greater_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).greater_than(rhs)
+            }
+
+            fn greater_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self).greater_equal(rhs)
+            }
+        }
+        impl<T> IntOrd<&DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).less_than(rhs)
+            }
+
+            fn less_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).less_equal(rhs)
+            }
+
+            fn greater_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).greater_than(rhs)
+            }
+
+            fn greater_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(self.clone()).greater_equal(rhs)
+            }
+        }
+        impl<T> IntOrd<DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).less_than(rhs)
+            }
+
+            fn less_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).less_equal(rhs)
+            }
+
+            fn greater_than(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).greater_than(rhs)
+            }
+
+            fn greater_equal(self, rhs: DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).greater_equal(rhs)
+            }
+        }
+        impl<T> IntOrd<&DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = BoolVar<T>;
+
+            fn less_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).less_than(rhs)
+            }
+
+            fn less_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).less_equal(rhs)
+            }
+
+            fn greater_than(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).greater_than(rhs)
+            }
+
+            fn greater_equal(self, rhs: &DynIntVar<T, $sign>) -> Self::Output {
+                rhs.constant(*self).greater_equal(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! int_ord_uint_x_unsigned {
+    ($pty:ty) => {
+        int_ord_uint_x_sign!($pty, false);
+    };
+}
+
+impl_int_upty!(int_ord_uint_x_unsigned);
+
+macro_rules! int_ord_uint_x_signed {
+    ($pty:ty) => {
+        int_ord_uint_x_sign!($pty, true);
+    };
+}
+
+impl_int_ipty!(int_ord_uint_x_signed);
+
 // types
 
 /// DynIntExprNode for unsinged integer.
