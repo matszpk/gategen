@@ -890,3 +890,213 @@ new_condop_impl!(
     condsub_upty,
     condsub_ipty
 );
+
+macro_rules! condmul_varvar {
+    ($sign:expr) => {
+        impl<T> IntCondMul<DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.cond_mul(rhs.0);
+                (DynIntVar(r), c.into())
+            }
+        }
+        impl<T> IntCondMul<&DynIntVar<T, $sign>> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.cond_mul(rhs.0.clone());
+                (DynIntVar(r), c.into())
+            }
+        }
+        impl<T> IntCondMul<DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().cond_mul(rhs.0);
+                (DynIntVar(r), c.into())
+            }
+        }
+        impl<T> IntCondMul<&DynIntVar<T, $sign>> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().cond_mul(rhs.0.clone());
+                (DynIntVar(r), c.into())
+            }
+        }
+    };
+}
+
+condmul_varvar!(false);
+condmul_varvar!(true);
+
+macro_rules! condmul_gen {
+    ($sign:expr, $pty:ty) => {
+        impl<T> IntCondMul<$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                let r = self.constant(rhs);
+                self.cond_mul(r)
+            }
+        }
+        impl<T> IntCondMul<&$pty> for DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                let r = self.constant(*rhs);
+                self.cond_mul(r)
+            }
+        }
+        impl<T> IntCondMul<$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: $pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(self.constant(rhs))
+            }
+        }
+        impl<T> IntCondMul<&$pty> for &DynIntVar<T, $sign>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &$pty) -> (Self::Output, Self::OutputCond) {
+                self.cond_mul(self.constant(*rhs))
+            }
+        }
+
+        impl<T> IntCondMul<DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                rhs.constant(self).cond_mul(rhs)
+            }
+        }
+        impl<T> IntCondMul<&DynIntVar<T, $sign>> for $pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                rhs.constant(self).cond_mul(rhs)
+            }
+        }
+        impl<T> IntCondMul<DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                rhs.constant(*self).cond_mul(rhs)
+            }
+        }
+        impl<T> IntCondMul<&DynIntVar<T, $sign>> for &$pty
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntVar<T, $sign>: SelfConstant<$pty>,
+        {
+            type Output = DynIntVar<T, $sign>;
+            type OutputCond = BoolVar<T>;
+            fn cond_mul(self, rhs: &DynIntVar<T, $sign>) -> (Self::Output, Self::OutputCond) {
+                rhs.constant(*self).cond_mul(rhs)
+            }
+        }
+    };
+}
+
+macro_rules! condmul_upty {
+    ($pty:ty) => {
+        condmul_gen!(false, $pty);
+    };
+}
+macro_rules! condmul_ipty {
+    ($pty:ty) => {
+        condmul_gen!(true, $pty);
+    };
+}
+
+impl_int_upty!(condmul_upty);
+impl_int_ipty!(condmul_ipty);
