@@ -1,4 +1,4 @@
-// bin_arith.rs - integer expression structures.
+// arith.rs - integer expression structures.
 //
 // cnfgen - Generate the DIMACS CNF formula from operations
 // Copyright (C) 2022  Mateusz Szpakowski
