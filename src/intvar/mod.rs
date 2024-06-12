@@ -1313,7 +1313,7 @@ where
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
-pub fn int_booltable_partial_r<T, N, K, I, const SIGN: bool>(
+pub fn int_booltable_partial_r<T, K, I, const SIGN: bool>(
     index: &IntVar<T, K, SIGN>,
     table_iter: I,
     fill: &BoolVar<T>,
