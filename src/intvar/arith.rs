@@ -268,7 +268,7 @@ where
     }
 
     /// Returns result of modular subtraction with input carry - it performs `(A + !B) + carry`.
-    pub fn subc(&self, rhs: Self, in_carry: &BoolVar<T>) -> Self {
+    pub fn subc(&self, rhs: &Self, in_carry: &BoolVar<T>) -> Self {
         Self(self.0.clone().subc(rhs.0.clone(), in_carry.clone().into()))
     }
 
@@ -278,16 +278,20 @@ where
     }
 
     /// Returns result of modular addition with input carry `in_carry` and output carry.
-    pub fn addc_with_carry_c(&self, rhs: &Self, in_carry: BoolVar<T>) -> (Self, BoolVar<T>) {
+    pub fn addc_with_carry_c<BT: Into<BoolVar<T>>>(
+        &self,
+        rhs: Self,
+        in_carry: BT,
+    ) -> (Self, BoolVar<T>) {
         let (s, c) = self
             .0
             .clone()
-            .addc_with_carry(rhs.0.clone(), in_carry.clone().into());
+            .addc_with_carry(rhs.0.clone(), in_carry.into().into());
         (Self(s), c.into())
     }
 
     /// Returns result of modular addition with input carry.
-    pub fn addc_c<BT: Into<BoolVar<T>>>(&self, rhs: &Self, in_carry: BT) -> Self {
+    pub fn addc_c<BT: Into<BoolVar<T>>>(&self, rhs: Self, in_carry: BT) -> Self {
         Self(self.0.clone().addc(rhs.0.clone(), in_carry.into().into()))
     }
 
