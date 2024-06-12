@@ -1129,12 +1129,16 @@ where
     K: ArrayLength<usize>,
     I: IntoIterator<Item = IntVar<T, N, SIGN>>,
 {
+    let tbl = table_iter
+        .into_iter()
+        .take(1 << K::USIZE)
+        .map(|x| x.into())
+        .collect::<Vec<_>>();
+    let tbl_len = tbl.len();
     IntVar::<T, N, SIGN>(intexpr::int_table(
         index.into(),
-        table_iter
-            .into_iter()
-            .map(|x| x.into())
-            .chain(std::iter::repeat(fill.into()).take(1usize << K::USIZE)),
+        tbl.into_iter()
+            .chain(std::iter::repeat(fill.into()).take((1 << K::USIZE) - tbl_len)),
     ))
 }
 
@@ -1181,12 +1185,16 @@ where
     I: IntoIterator<Item = BoolVar<T>>,
     BTP: Into<BoolVar<T>>,
 {
+    let tbl = table_iter
+        .into_iter()
+        .take(1 << K::USIZE)
+        .map(|x| x.into())
+        .collect::<Vec<_>>();
+    let tbl_len = tbl.len();
     BoolVar::<T>::from(intexpr::int_booltable(
         index.into(),
-        table_iter
-            .into_iter()
-            .map(|x| x.into())
-            .chain(std::iter::repeat(fill.into().into()).take(1usize << K::USIZE)),
+        tbl.into_iter()
+            .chain(std::iter::repeat(fill.into().into()).take((1 << K::USIZE) - tbl_len)),
     ))
 }
 
