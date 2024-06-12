@@ -27,6 +27,8 @@ use generic_array::*;
 
 use crate::boolexpr::BoolExprNode;
 use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
+use crate::dynintexpr::DynIntExprNode;
+use crate::dynintvar::DynIntVar;
 use crate::gate::{Literal, VarLit};
 use crate::intexpr::{IntError, IntExprNode};
 use crate::{impl_int_ipty, impl_int_ty1_lt_ty2, impl_int_upty};
@@ -349,8 +351,6 @@ macro_rules! impl_int_from {
 
 impl_int_ty1_lt_ty2!(impl_int_from);
 
-// conversion from integers
-
 impl<T, N, const SIGN: bool> From<IntVar<T, N, SIGN>> for IntExprNode<T, N, SIGN>
 where
     T: VarLit + Debug,
@@ -370,6 +370,18 @@ where
         Self(t)
     }
 }
+
+impl<T: VarLit, N: ArrayLength<usize>, const SIGN: bool> TryFrom<DynIntVar<T, SIGN>>
+    for IntVar<T, N, SIGN>
+{
+    type Error = IntError;
+
+    fn try_from(v: DynIntVar<T, SIGN>) -> Result<Self, Self::Error> {
+        DynIntExprNode::from(v).try_into().map(|x| Self(x))
+    }
+}
+
+// conversion from integers
 
 macro_rules! impl_xint_from {
     ($t:ident, $creator:ident) => {

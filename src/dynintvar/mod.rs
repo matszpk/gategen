@@ -36,6 +36,7 @@ pub use crate::intexpr::{
     IntCondSub, IntEqual, IntError, IntExprNode, IntModAdd, IntModAddAssign, IntModMul,
     IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd, IntRol, IntRor,
 };
+use crate::intvar::IntVar;
 use crate::{impl_int_ipty, impl_int_upty};
 use gatesim::Circuit;
 
@@ -260,5 +261,15 @@ impl<T: VarLit> TryFromNSized<DynIntVar<T, true>> for DynIntVar<T, true> {
 
     fn try_from_n(input: DynIntVar<T, true>, n: usize) -> Result<Self, IntError> {
         TryFromNSized::try_from_n(input.0, n).map(|x| Self(x))
+    }
+}
+
+impl<T, N, const SIGN: bool> From<IntVar<T, N, SIGN>> for DynIntVar<T, SIGN>
+where
+    T: VarLit,
+    N: ArrayLength<usize>,
+{
+    fn from(v: IntVar<T, N, SIGN>) -> Self {
+        Self(DynIntExprNode::from(IntExprNode::from(v)))
     }
 }
