@@ -1144,7 +1144,7 @@ where
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
-pub fn int_booltable<T, N, K, I, ITP, const SIGN: bool>(
+pub fn int_booltable<T, K, I, ITP, const SIGN: bool>(
     index: IntVar<T, K, SIGN>,
     table_iter: I,
 ) -> BoolVar<T>
@@ -1154,7 +1154,6 @@ where
     <T as TryInto<usize>>::Error: Debug,
     <T as TryFrom<usize>>::Error: Debug,
     <isize as TryFrom<T>>::Error: Debug,
-    N: ArrayLength<usize>,
     K: ArrayLength<usize>,
     ITP: Into<BoolVar<T>>,
     I: IntoIterator<Item = ITP>,
@@ -1170,7 +1169,7 @@ where
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
-pub fn int_booltable_partial<T, N, K, I, ITP, BTP, const SIGN: bool>(
+pub fn int_booltable_partial<T, K, I, ITP, BTP, const SIGN: bool>(
     index: IntVar<T, K, SIGN>,
     table_iter: I,
     fill: BTP,
@@ -1181,7 +1180,6 @@ where
     <T as TryInto<usize>>::Error: Debug,
     <T as TryFrom<usize>>::Error: Debug,
     <isize as TryFrom<T>>::Error: Debug,
-    N: ArrayLength<usize>,
     K: ArrayLength<usize>,
     ITP: Into<BoolVar<T>>,
     I: IntoIterator<Item = ITP>,
@@ -1292,7 +1290,7 @@ where
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
-pub fn int_booltable_r<T, N, K, I, ITP, const SIGN: bool>(
+pub fn int_booltable_r<T, K, I, ITP, const SIGN: bool>(
     index: &IntVar<T, K, SIGN>,
     table_iter: I,
 ) -> BoolVar<T>
@@ -1302,12 +1300,11 @@ where
     <T as TryInto<usize>>::Error: Debug,
     <T as TryFrom<usize>>::Error: Debug,
     <isize as TryFrom<T>>::Error: Debug,
-    N: ArrayLength<usize>,
     K: ArrayLength<usize>,
     ITP: Into<BoolVar<T>>,
     I: IntoIterator<Item = ITP>,
 {
-    int_booltable::<T, N, K, I, ITP, SIGN>(index.clone(), table_iter)
+    int_booltable::<T, K, I, ITP, SIGN>(index.clone(), table_iter)
 }
 
 /// Returns result of indexing of table with values.
@@ -1326,16 +1323,11 @@ where
     <T as TryInto<usize>>::Error: Debug,
     <T as TryFrom<usize>>::Error: Debug,
     <isize as TryFrom<T>>::Error: Debug,
-    N: ArrayLength<usize>,
     K: ArrayLength<usize>,
     ITP: Into<BoolVar<T>>,
     I: IntoIterator<Item = ITP>,
 {
-    int_booltable_partial::<T, N, K, I, ITP, BoolVar<T>, SIGN>(
-        index.clone(),
-        table_iter,
-        fill.clone(),
-    )
+    int_booltable_partial::<T, K, I, ITP, BoolVar<T>, SIGN>(index.clone(), table_iter, fill.clone())
 }
 
 /// Demulitplexer - returns list of outputs of demulitplexer.
