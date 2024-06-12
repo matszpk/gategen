@@ -1255,7 +1255,7 @@ macro_rules! new_shiftop_selfimm_impl {
                     <T as TryFrom<usize>>::Error: Debug,
                     <isize as TryFrom<T>>::Error: Debug,
                     N: ArrayLength<usize>,
-                    IntVar<T, $bits, $sign>: IntConstant<T, $ty>,
+                    IntVar<T, $bits, $sign>: From<$ty>,
                 {
                     type Output = IntVar<T, $bits, $sign>;
                     fn $u(self, rhs: IntVar<T, N, SIGN>) -> Self::Output {
@@ -1270,7 +1270,7 @@ macro_rules! new_shiftop_selfimm_impl {
                     <T as TryFrom<usize>>::Error: Debug,
                     <isize as TryFrom<T>>::Error: Debug,
                     N: ArrayLength<usize>,
-                    IntVar<T, $bits, $sign>: IntConstant<T, $ty>,
+                    IntVar<T, $bits, $sign>: From<$ty>,
                 {
                     type Output = IntVar<T, $bits, $sign>;
                     fn $u(self, rhs: &IntVar<T, N, SIGN>) -> Self::Output {
@@ -1285,7 +1285,7 @@ macro_rules! new_shiftop_selfimm_impl {
                     <T as TryFrom<usize>>::Error: Debug,
                     <isize as TryFrom<T>>::Error: Debug,
                     N: ArrayLength<usize>,
-                    IntVar<T, $bits, $sign>: IntConstant<T, $ty>,
+                    IntVar<T, $bits, $sign>: From<$ty>,
                 {
                     type Output = IntVar<T, $bits, $sign>;
                     fn $u(self, rhs: IntVar<T, N, SIGN>) -> Self::Output {
@@ -1300,7 +1300,7 @@ macro_rules! new_shiftop_selfimm_impl {
                     <T as TryFrom<usize>>::Error: Debug,
                     <isize as TryFrom<T>>::Error: Debug,
                     N: ArrayLength<usize>,
-                    IntVar<T, $bits, $sign>: IntConstant<T, $ty>,
+                    IntVar<T, $bits, $sign>: From<$ty>,
                 {
                     type Output = IntVar<T, $bits, $sign>;
                     fn $u(self, rhs: &IntVar<T, N, SIGN>) -> Self::Output {
