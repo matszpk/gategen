@@ -1098,6 +1098,71 @@ impl_int_upty!(condmul_upty);
 impl_int_ipty!(condmul_ipty);
 
 // shifts
+
+// Shifts
+macro_rules! new_shiftop_impl {
+    ($t:ident, $u:ident) => {
+        impl<T, const SIGN: bool, const SIGN2: bool> $t<DynIntVar<T, SIGN2>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+            fn $u(self, rhs: DynIntVar<T, SIGN2>) -> Self::Output {
+                Self(self.0.$u(rhs.0))
+            }
+        }
+        impl<T, const SIGN: bool, const SIGN2: bool> $t<&DynIntVar<T, SIGN2>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = Self;
+            fn $u(self, rhs: &DynIntVar<T, SIGN2>) -> Self::Output {
+                Self(self.0.$u(rhs.0.clone()))
+            }
+        }
+        impl<T, const SIGN: bool, const SIGN2: bool> $t<DynIntVar<T, SIGN2>> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn $u(self, rhs: DynIntVar<T, SIGN2>) -> Self::Output {
+                DynIntVar::<T, SIGN>(self.0.clone().$u(rhs.0))
+            }
+        }
+        impl<T, const SIGN: bool, const SIGN2: bool> $t<&DynIntVar<T, SIGN2>>
+            for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn $u(self, rhs: &DynIntVar<T, SIGN2>) -> Self::Output {
+                DynIntVar::<T, SIGN>(self.0.clone().$u(rhs.0.clone()))
+            }
+        }
+    };
+}
+
+new_shiftop_impl!(Shl, shl);
+new_shiftop_impl!(Shr, shr);
+new_shiftop_impl!(IntRol, rotate_left);
+new_shiftop_impl!(IntRor, rotate_right);
+
 // shifts
 
 // Fullmul
