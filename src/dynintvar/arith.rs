@@ -1163,6 +1163,94 @@ new_shiftop_impl!(Shr, shr);
 new_shiftop_impl!(IntRol, rotate_left);
 new_shiftop_impl!(IntRor, rotate_right);
 
+macro_rules! new_shiftop_selfimm_impl {
+    ($t:ident, $u:ident, $mselfimm:ident) => {
+        macro_rules! $mselfimm {
+            ($sign:expr, $ty:ty, $bits:expr) => {
+                impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    fn $u(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
+                        DynIntVar::<T, $sign>::from_n(self, $bits) << rhs
+                    }
+                }
+                impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    fn $u(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
+                        DynIntVar::<T, $sign>::from_n(self, $bits) << rhs.clone()
+                    }
+                }
+                impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    fn $u(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits) << rhs
+                    }
+                }
+                impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    fn $u(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits) << rhs.clone()
+                    }
+                }
+            };
+        }
+
+        $mselfimm!(false, u8, 8);
+        $mselfimm!(false, u16, 16);
+        $mselfimm!(false, u32, 32);
+        #[cfg(target_pointer_width = "32")]
+        $mselfimm!(false, usize, 32);
+        #[cfg(target_pointer_width = "64")]
+        $mselfimm!(false, usize, 64);
+        $mselfimm!(false, u64, 64);
+        $mselfimm!(false, u128, 128);
+
+        $mselfimm!(true, i8, 8);
+        $mselfimm!(true, i16, 16);
+        $mselfimm!(true, i32, 32);
+        #[cfg(target_pointer_width = "32")]
+        $mselfimm!(true, isize, 32);
+        #[cfg(target_pointer_width = "64")]
+        $mselfimm!(true, isize, 64);
+        $mselfimm!(true, i64, 64);
+        $mselfimm!(true, i128, 128);
+    };
+}
+
+new_shiftop_selfimm_impl!(Shl, shl, impl_shl_self_imm);
+new_shiftop_selfimm_impl!(Shr, shr, impl_shr_self_imm);
+
 // shifts
 
 // Fullmul
