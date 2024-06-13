@@ -1178,7 +1178,7 @@ macro_rules! new_shiftop_selfimm_impl {
                 {
                     type Output = DynIntVar<T, $sign>;
                     fn $u(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
-                        DynIntVar::<T, $sign>::from_n(self, $bits) << rhs
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs)
                     }
                 }
                 impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for $ty
@@ -1192,7 +1192,7 @@ macro_rules! new_shiftop_selfimm_impl {
                 {
                     type Output = DynIntVar<T, $sign>;
                     fn $u(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
-                        DynIntVar::<T, $sign>::from_n(self, $bits) << rhs.clone()
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs.clone())
                     }
                 }
                 impl<T, const SIGN: bool> $t<DynIntVar<T, SIGN>> for &$ty
@@ -1206,7 +1206,7 @@ macro_rules! new_shiftop_selfimm_impl {
                 {
                     type Output = DynIntVar<T, $sign>;
                     fn $u(self, rhs: DynIntVar<T, SIGN>) -> Self::Output {
-                        DynIntVar::<T, $sign>::from_n(*self, $bits) << rhs
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs)
                     }
                 }
                 impl<T, const SIGN: bool> $t<&DynIntVar<T, SIGN>> for &$ty
@@ -1220,7 +1220,7 @@ macro_rules! new_shiftop_selfimm_impl {
                 {
                     type Output = DynIntVar<T, $sign>;
                     fn $u(self, rhs: &DynIntVar<T, SIGN>) -> Self::Output {
-                        DynIntVar::<T, $sign>::from_n(*self, $bits) << rhs.clone()
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs.clone())
                     }
                 }
             };
