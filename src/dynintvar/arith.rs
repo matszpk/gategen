@@ -1876,39 +1876,39 @@ macro_rules! impl_int_shx_assign {
             }
         }
 
-        // macro_rules! $macro {
-        //     ($ty:ty) => {
-        //         impl<T, const SIGN: bool> $trait<$ty> for DynIntVar<T, SIGN>
-        //         where
-        //             T: VarLit + Neg<Output = T> + Debug,
-        //             isize: TryFrom<T>,
-        //             <T as TryInto<usize>>::Error: Debug,
-        //             <T as TryFrom<usize>>::Error: Debug,
-        //             <isize as TryFrom<T>>::Error: Debug,
-        //             N: ArrayLength<usize>,
-        //         {
-        //             fn $op_assign(&mut self, rhs: $ty) {
-        //                 *self = self.clone().$op(rhs)
-        //             }
-        //         }
-        //         impl<T, const SIGN: bool> $trait<&$ty> for DynIntVar<T, SIGN>
-        //         where
-        //             T: VarLit + Neg<Output = T> + Debug,
-        //             isize: TryFrom<T>,
-        //             <T as TryInto<usize>>::Error: Debug,
-        //             <T as TryFrom<usize>>::Error: Debug,
-        //             <isize as TryFrom<T>>::Error: Debug,
-        //             N: ArrayLength<usize>,
-        //         {
-        //             fn $op_assign(&mut self, rhs: &$ty) {
-        //                 *self = self.clone().$op(*rhs)
-        //             }
-        //         }
-        //     };
-        // }
-        //
-        // impl_int_upty!($macro);
-        // impl_int_ipty!($macro);
+        macro_rules! $macro {
+            ($ty:ty) => {
+                impl<T, const SIGN: bool> $trait<$ty> for DynIntVar<T, SIGN>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    BoolVar<T>: From<bool>,
+                {
+                    fn $op_assign(&mut self, rhs: $ty) {
+                        *self = self.clone().$op(rhs)
+                    }
+                }
+                impl<T, const SIGN: bool> $trait<&$ty> for DynIntVar<T, SIGN>
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    BoolVar<T>: From<bool>,
+                {
+                    fn $op_assign(&mut self, rhs: &$ty) {
+                        *self = self.clone().$op(*rhs)
+                    }
+                }
+            };
+        }
+
+        impl_int_upty!($macro);
+        impl_int_ipty!($macro);
     };
 }
 
