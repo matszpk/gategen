@@ -17,7 +17,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-use std::cell::RefCell;
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;

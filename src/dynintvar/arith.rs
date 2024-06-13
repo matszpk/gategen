@@ -25,9 +25,6 @@ use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor,
 use std::ops::{Div, Rem};
 use std::ops::{Mul, MulAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
 
-use generic_array::typenum::*;
-use generic_array::*;
-
 use super::*;
 use crate::VarLit;
 use crate::{impl_int_ipty, impl_int_upty};
