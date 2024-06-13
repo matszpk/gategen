@@ -192,6 +192,19 @@ where
     }
 }
 
+impl<T> BoolVar<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    pub fn to_dynint1(self) -> DynIntVar<T, false> {
+        DynIntVar::filled(1, self)
+    }
+}
+
 impl<T> DynIntVar<T, false>
 where
     T: VarLit + Neg<Output = T> + Debug,
