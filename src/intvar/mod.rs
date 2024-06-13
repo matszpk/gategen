@@ -1097,6 +1097,21 @@ impl_int_ipty!(int_ord_uint_x_signed);
 
 pub use crate::intexpr::int_ite;
 
+pub fn int_ite_r<T, N: ArrayLength<usize>, const SIGN: bool>(
+    c: &BoolVar<T>,
+    t: &IntVar<T, N, SIGN>,
+    e: &IntVar<T, N, SIGN>,
+) -> IntVar<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    int_ite(c.clone(), t.clone(), e.clone())
+}
+
 /// Returns result of indexing of table with values.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
