@@ -1367,7 +1367,7 @@ macro_rules! impl_int_shr_imm {
         {
             type Output = Self;
             fn shr(self, rhs: &$ty) -> Self::Output {
-                self << *rhs
+                self >> *rhs
             }
         }
         impl<T, const SIGN: bool> Shr<$ty> for &DynIntVar<T, SIGN>
@@ -1381,7 +1381,7 @@ macro_rules! impl_int_shr_imm {
         {
             type Output = DynIntVar<T, SIGN>;
             fn shr(self, rhs: $ty) -> Self::Output {
-                self.clone() << rhs
+                self.clone() >> rhs
             }
         }
         impl<T, const SIGN: bool> Shr<&$ty> for &DynIntVar<T, SIGN>
@@ -1395,7 +1395,7 @@ macro_rules! impl_int_shr_imm {
         {
             type Output = DynIntVar<T, SIGN>;
             fn shr(self, rhs: &$ty) -> Self::Output {
-                self.clone() << *rhs
+                self.clone() >> *rhs
             }
         }
     };
@@ -1403,6 +1403,156 @@ macro_rules! impl_int_shr_imm {
 
 impl_int_upty!(impl_int_shr_imm);
 impl_int_ipty!(impl_int_shr_imm);
+
+macro_rules! impl_int_rol_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> IntRol<$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn rotate_left(self, rhs: $ty) -> Self::Output {
+                let n = self.bitnum();
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                DynIntVar::from_iter(
+                    self.iter()
+                        .skip(n - usize_rhs)
+                        .chain(self.iter().take(n - usize_rhs)),
+                )
+            }
+        }
+        impl<T, const SIGN: bool> IntRol<&$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn rotate_left(self, rhs: &$ty) -> Self::Output {
+                self.rotate_left(*rhs)
+            }
+        }
+        impl<T, const SIGN: bool> IntRol<$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn rotate_left(self, rhs: $ty) -> Self::Output {
+                self.clone().rotate_left(rhs)
+            }
+        }
+        impl<T, const SIGN: bool> IntRol<&$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn rotate_left(self, rhs: &$ty) -> Self::Output {
+                self.clone().rotate_left(*rhs)
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_rol_imm);
+impl_int_ipty!(impl_int_rol_imm);
+
+macro_rules! impl_int_ror_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> IntRor<$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn rotate_right(self, rhs: $ty) -> Self::Output {
+                let n = self.bitnum();
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                DynIntVar::from_iter(
+                    self.iter()
+                        .skip(usize_rhs)
+                        .chain(self.iter().take(usize_rhs)),
+                )
+            }
+        }
+        impl<T, const SIGN: bool> IntRor<&$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn rotate_right(self, rhs: &$ty) -> Self::Output {
+                self.rotate_right(*rhs)
+            }
+        }
+        impl<T, const SIGN: bool> IntRor<$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn rotate_right(self, rhs: $ty) -> Self::Output {
+                self.clone().rotate_right(rhs)
+            }
+        }
+        impl<T, const SIGN: bool> IntRor<&$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn rotate_right(self, rhs: &$ty) -> Self::Output {
+                self.clone().rotate_right(*rhs)
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_ror_imm);
+impl_int_ipty!(impl_int_ror_imm);
 
 // CondShifts
 macro_rules! new_condshiftop_impl {
