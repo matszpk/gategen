@@ -1251,6 +1251,367 @@ macro_rules! new_shiftop_selfimm_impl {
 new_shiftop_selfimm_impl!(Shl, shl, impl_shl_self_imm);
 new_shiftop_selfimm_impl!(Shr, shr, impl_shr_self_imm);
 
+// CondShifts
+macro_rules! new_condshiftop_impl {
+    ($t:ident, $u:ident, $mselfimm:ident) => {
+        impl<T, const SIGN: bool> $t<DynIntVar<T, false>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$u(rhs.0);
+                (Self(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, false>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$u(rhs.0.clone());
+                (Self(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<DynIntVar<T, false>> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$u(rhs.0);
+                (DynIntVar::<T, SIGN>(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, false>> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$u(rhs.0.clone());
+                (DynIntVar::<T, SIGN>(r), c.into())
+            }
+        }
+
+        impl<T, const SIGN: bool> $t<DynIntVar<T, true>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$u(rhs.0);
+                (Self(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, true>> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+        {
+            type Output = Self;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.$u(rhs.0.clone());
+                (Self(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<DynIntVar<T, true>> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$u(rhs.0);
+                (DynIntVar::<T, SIGN>(r), c.into())
+            }
+        }
+        impl<T, const SIGN: bool> $t<&DynIntVar<T, true>> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            type OutputCond = BoolVar<T>;
+            fn $u(self, rhs: &DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                let (r, c) = self.0.clone().$u(rhs.0.clone());
+                (DynIntVar::<T, SIGN>(r), c.into())
+            }
+        }
+
+        macro_rules! $mselfimm {
+            ($sign:expr, $ty:ty, $bits:expr) => {
+                impl<T> $t<DynIntVar<T, false>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs)
+                    }
+                }
+                impl<T> $t<&DynIntVar<T, false>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs.clone())
+                    }
+                }
+                impl<T> $t<DynIntVar<T, false>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs)
+                    }
+                }
+                impl<T> $t<&DynIntVar<T, false>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, false>: TryIntConstantN<T, usize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &DynIntVar<T, false>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs.clone())
+                    }
+                }
+
+                impl<T> $t<DynIntVar<T, true>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs)
+                    }
+                }
+                impl<T> $t<&DynIntVar<T, true>> for $ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(self, $bits).$u(rhs.clone())
+                    }
+                }
+                impl<T> $t<DynIntVar<T, true>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs)
+                    }
+                }
+                impl<T> $t<&DynIntVar<T, true>> for &$ty
+                where
+                    T: VarLit + Neg<Output = T> + Debug,
+                    isize: TryFrom<T>,
+                    <T as TryInto<usize>>::Error: Debug,
+                    <T as TryFrom<usize>>::Error: Debug,
+                    <isize as TryFrom<T>>::Error: Debug,
+                    DynIntVar<T, $sign>: FromNSized<$ty>,
+                    DynIntExprNode<T, true>: TryIntConstantN<T, isize>,
+                {
+                    type Output = DynIntVar<T, $sign>;
+                    type OutputCond = BoolVar<T>;
+                    fn $u(self, rhs: &DynIntVar<T, true>) -> (Self::Output, Self::OutputCond) {
+                        DynIntVar::<T, $sign>::from_n(*self, $bits).$u(rhs.clone())
+                    }
+                }
+            };
+        }
+
+        $mselfimm!(false, u8, 8);
+        $mselfimm!(false, u16, 16);
+        $mselfimm!(false, u32, 32);
+        #[cfg(target_pointer_width = "32")]
+        $mselfimm!(false, usize, 32);
+        #[cfg(target_pointer_width = "64")]
+        $mselfimm!(false, usize, 64);
+        $mselfimm!(false, u64, 64);
+        $mselfimm!(false, u128, 128);
+
+        $mselfimm!(true, i8, 8);
+        $mselfimm!(true, i16, 16);
+        $mselfimm!(true, i32, 32);
+        #[cfg(target_pointer_width = "32")]
+        $mselfimm!(true, isize, 32);
+        #[cfg(target_pointer_width = "64")]
+        $mselfimm!(true, isize, 64);
+        $mselfimm!(true, i64, 64);
+        $mselfimm!(true, i128, 128);
+    };
+}
+
+new_condshiftop_impl!(IntCondShl, cond_shl, cond_shl_self_imm);
+new_condshiftop_impl!(IntCondShr, cond_shr, cond_shr_self_imm);
+
+// Shift assigns
+macro_rules! impl_int_shx_assign {
+    ($trait:ident, $op:ident, $op_assign:ident, $macro:ident) => {
+        impl<T, const SIGN: bool, const SIGN2: bool> $trait<DynIntVar<T, SIGN2>>
+            for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            fn $op_assign(&mut self, rhs: DynIntVar<T, SIGN2>) {
+                *self = self.clone().$op(rhs)
+            }
+        }
+        impl<T, const SIGN: bool, const SIGN2: bool> $trait<&DynIntVar<T, SIGN2>>
+            for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+        {
+            fn $op_assign(&mut self, rhs: &DynIntVar<T, SIGN2>) {
+                *self = self.clone().$op(rhs.clone())
+            }
+        }
+
+        // macro_rules! $macro {
+        //     ($ty:ty) => {
+        //         impl<T, const SIGN: bool> $trait<$ty> for DynIntVar<T, SIGN>
+        //         where
+        //             T: VarLit + Neg<Output = T> + Debug,
+        //             isize: TryFrom<T>,
+        //             <T as TryInto<usize>>::Error: Debug,
+        //             <T as TryFrom<usize>>::Error: Debug,
+        //             <isize as TryFrom<T>>::Error: Debug,
+        //             N: ArrayLength<usize>,
+        //         {
+        //             fn $op_assign(&mut self, rhs: $ty) {
+        //                 *self = self.clone().$op(rhs)
+        //             }
+        //         }
+        //         impl<T, const SIGN: bool> $trait<&$ty> for DynIntVar<T, SIGN>
+        //         where
+        //             T: VarLit + Neg<Output = T> + Debug,
+        //             isize: TryFrom<T>,
+        //             <T as TryInto<usize>>::Error: Debug,
+        //             <T as TryFrom<usize>>::Error: Debug,
+        //             <isize as TryFrom<T>>::Error: Debug,
+        //             N: ArrayLength<usize>,
+        //         {
+        //             fn $op_assign(&mut self, rhs: &$ty) {
+        //                 *self = self.clone().$op(*rhs)
+        //             }
+        //         }
+        //     };
+        // }
+        //
+        // impl_int_upty!($macro);
+        // impl_int_ipty!($macro);
+    };
+}
+
+impl_int_shx_assign!(ShlAssign, shl, shl_assign, impl_int_shl_assign_imm);
+impl_int_shx_assign!(ShrAssign, shr, shr_assign, impl_int_shr_assign_imm);
+
 // shifts
 
 // Fullmul
