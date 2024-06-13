@@ -1251,6 +1251,159 @@ macro_rules! new_shiftop_selfimm_impl {
 new_shiftop_selfimm_impl!(Shl, shl, impl_shl_self_imm);
 new_shiftop_selfimm_impl!(Shr, shr, impl_shr_self_imm);
 
+// shift imm
+
+macro_rules! impl_int_shl_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> Shl<$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn shl(self, rhs: $ty) -> Self::Output {
+                let n = self.bitnum();
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                DynIntVar::from_iter(
+                    std::iter::repeat(false.into())
+                        .take(usize_rhs)
+                        .chain(self.iter().take(n - usize_rhs)),
+                )
+            }
+        }
+        impl<T, const SIGN: bool> Shl<&$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn shl(self, rhs: &$ty) -> Self::Output {
+                self << *rhs
+            }
+        }
+        impl<T, const SIGN: bool> Shl<$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn shl(self, rhs: $ty) -> Self::Output {
+                self.clone() << rhs
+            }
+        }
+        impl<T, const SIGN: bool> Shl<&$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn shl(self, rhs: &$ty) -> Self::Output {
+                self.clone() << *rhs
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_shl_imm);
+impl_int_ipty!(impl_int_shl_imm);
+
+macro_rules! impl_int_shr_imm {
+    ($ty:ty) => {
+        impl<T, const SIGN: bool> Shr<$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn shr(self, rhs: $ty) -> Self::Output {
+                let n = self.bitnum();
+                // check whether zeroes
+                #[allow(unused_comparisons)]
+                if rhs < 0 || (rhs as usize) >= n {
+                    panic!("this arithmetic operation will overflow");
+                }
+                let usize_rhs = rhs as usize;
+                DynIntVar::from_iter(
+                    self.iter().skip(usize_rhs).chain(
+                        std::iter::repeat(if SIGN { self.bit(n - 1) } else { false.into() })
+                            .take(n - usize_rhs),
+                    ),
+                )
+            }
+        }
+        impl<T, const SIGN: bool> Shr<&$ty> for DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = Self;
+            fn shr(self, rhs: &$ty) -> Self::Output {
+                self << *rhs
+            }
+        }
+        impl<T, const SIGN: bool> Shr<$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn shr(self, rhs: $ty) -> Self::Output {
+                self.clone() << rhs
+            }
+        }
+        impl<T, const SIGN: bool> Shr<&$ty> for &DynIntVar<T, SIGN>
+        where
+            T: VarLit + Neg<Output = T> + Debug,
+            isize: TryFrom<T>,
+            <T as TryInto<usize>>::Error: Debug,
+            <T as TryFrom<usize>>::Error: Debug,
+            <isize as TryFrom<T>>::Error: Debug,
+            BoolVar<T>: From<bool>,
+        {
+            type Output = DynIntVar<T, SIGN>;
+            fn shr(self, rhs: &$ty) -> Self::Output {
+                self.clone() << *rhs
+            }
+        }
+    };
+}
+
+impl_int_upty!(impl_int_shr_imm);
+impl_int_ipty!(impl_int_shr_imm);
+
 // CondShifts
 macro_rules! new_condshiftop_impl {
     ($t:ident, $u:ident, $mselfimm:ident) => {
