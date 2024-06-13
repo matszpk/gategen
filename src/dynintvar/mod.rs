@@ -27,7 +27,8 @@ use generic_array::*;
 
 use crate::boolexpr::BoolExprNode;
 use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS};
-use crate::dynintexpr::{DynIntExprNode, TryFromNSized, TryIntConstantN};
+pub use crate::dynintexpr::TryFromNSized;
+use crate::dynintexpr::{DynIntExprNode, TryIntConstantN};
 use crate::gate::{Literal, VarLit};
 pub use crate::intexpr::{
     BitVal, DivMod, ExtraOps, FullMul, IntCondAdd, IntCondMul, IntCondNeg, IntCondShl, IntCondShr,
