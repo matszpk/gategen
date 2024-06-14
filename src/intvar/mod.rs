@@ -20,7 +20,7 @@
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::ops::{Add, Neg, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 use generic_array::typenum::*;
 use generic_array::*;
@@ -213,6 +213,39 @@ where
         Sum<N, N2>: ArrayLength<usize>,
     {
         IntVar::<T, Sum<N, N2>, false>(self.0.concat::<N2>(rest.into()))
+    }
+
+    /// Creates integer of concatenation of iterator
+    pub fn concat_iter<N2>(
+        self,
+        iter: impl IntoIterator<Item = Self>,
+    ) -> Option<IntVar<T, Prod<N, N2>, false>>
+    where
+        N: Mul<N2>,
+        N2: ArrayLength<usize>,
+        Prod<N, N2>: ArrayLength<usize>,
+    {
+        IntVar::<T, Prod<N, N2>, false>::from_iter(
+            iter.into_iter()
+                .map(|x| {
+                    let v = x.iter().collect::<Vec<_>>();
+                    v.into_iter()
+                })
+                .flatten(),
+        )
+    }
+
+    /// Creates integer of concatenation of iterator
+    pub fn cat_iter<N2>(
+        self,
+        iter: impl IntoIterator<Item = Self>,
+    ) -> Option<IntVar<T, Prod<N, N2>, false>>
+    where
+        N: Mul<N2>,
+        N2: ArrayLength<usize>,
+        Prod<N, N2>: ArrayLength<usize>,
+    {
+        self.concat_iter(iter)
     }
 
     /// Splits integer into two parts: the first with `K` bits and second with rest of bits.

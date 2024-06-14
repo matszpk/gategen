@@ -234,6 +234,23 @@ where
         Self(self.0.concat(rest.into()))
     }
 
+    /// Creates integer of concatenation of iterator
+    pub fn concat_iter(self, iter: impl IntoIterator<Item = Self>) -> Self {
+        Self::from_iter(
+            iter.into_iter()
+                .map(|x| {
+                    let v = x.iter().collect::<Vec<_>>();
+                    v.into_iter()
+                })
+                .flatten(),
+        )
+    }
+
+    /// Creates integer of concatenation of iterator
+    pub fn cat_iter(self, iter: impl IntoIterator<Item = Self>) -> Self {
+        self.concat_iter(iter)
+    }
+
     /// Splits integer into two parts: the first with `k` bits and second with rest of bits.
     pub fn split(self, k: usize) -> (Self, Self) {
         let (s1, s2) = self.0.split(k);
