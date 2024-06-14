@@ -235,7 +235,7 @@ where
     }
 
     /// Creates integer of concatenation of iterator
-    pub fn concat_iter(self, iter: impl IntoIterator<Item = Self>) -> Self {
+    pub fn concat_iter(iter: impl IntoIterator<Item = Self>) -> Self {
         Self::from_iter(
             iter.into_iter()
                 .map(|x| {
@@ -247,8 +247,8 @@ where
     }
 
     /// Creates integer of concatenation of iterator
-    pub fn cat_iter(self, iter: impl IntoIterator<Item = Self>) -> Self {
-        self.concat_iter(iter)
+    pub fn cat_iter(iter: impl IntoIterator<Item = Self>) -> Self {
+        Self::concat_iter(iter)
     }
 
     /// Splits integer into two parts: the first with `k` bits and second with rest of bits.

@@ -217,7 +217,6 @@ where
 
     /// Creates integer of concatenation of iterator
     pub fn concat_iter<N2>(
-        self,
         iter: impl IntoIterator<Item = Self>,
     ) -> Option<IntVar<T, Prod<N, N2>, false>>
     where
@@ -237,7 +236,6 @@ where
 
     /// Creates integer of concatenation of iterator
     pub fn cat_iter<N2>(
-        self,
         iter: impl IntoIterator<Item = Self>,
     ) -> Option<IntVar<T, Prod<N, N2>, false>>
     where
@@ -245,7 +243,7 @@ where
         N2: ArrayLength<usize>,
         Prod<N, N2>: ArrayLength<usize>,
     {
-        self.concat_iter(iter)
+        Self::concat_iter(iter)
     }
 
     /// Splits integer into two parts: the first with `K` bits and second with rest of bits.
