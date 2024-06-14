@@ -182,6 +182,27 @@ where
             .to_circuit(self.indexes.iter().copied())
     }
 
+    pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + cmp::Eq + PartialOrd,
+        <T as VarLit>::Unsigned: cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolExprNode<T>>,
+    {
+        use crate::boolexpr::input_map_to_input_list;
+        let (circuit, input_map) = self.to_circuit();
+        let input_list = input_map_to_input_list(input_map, iter);
+        gateutil::translate_inputs_rev(
+            circuit,
+            input_list.into_iter().map(|x| usize::try_from(x).unwrap()),
+        )
+    }
+
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = BoolExprNode<T>>,

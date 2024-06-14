@@ -232,6 +232,21 @@ where
         self.0.to_circuit()
     }
 
+    pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd,
+        <T as VarLit>::Unsigned: Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolVar<T>>,
+    {
+        self.0.to_translated_circuit(iter.into_iter().map(|x| x.0))
+    }
+
     pub fn from_circuit<ITP: Into<Self>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = ITP>,
@@ -246,6 +261,23 @@ where
             .map(|x| Self(x))
             .collect::<Vec<_>>()
     }
+}
+
+/// Convert to input list.
+pub fn input_map_to_input_list<T, I>(
+    input_map: HashMap<T, <T as VarLit>::Unsigned>,
+    iter: I,
+) -> Vec<<T as VarLit>::Unsigned>
+where
+    T: VarLit + Neg<Output = T> + std::hash::Hash + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    I: Iterator<Item = BoolVar<T>>,
+{
+    iter.map(|b| input_map[&b.0.varlit().unwrap()])
+        .collect::<Vec<_>>()
 }
 
 impl<T> Not for BoolVar<T>

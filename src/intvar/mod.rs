@@ -140,6 +140,22 @@ where
         self.0.to_circuit()
     }
 
+    pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + cmp::Eq + PartialOrd,
+        <T as VarLit>::Unsigned: cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolVar<T>>,
+    {
+        self.0
+            .to_translated_circuit(iter.into_iter().map(|x| BoolExprNode::from(x)))
+    }
+
     pub fn from_circuit<ITP: Into<BoolVar<T>>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = ITP>,
