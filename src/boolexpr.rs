@@ -164,6 +164,7 @@ where
         self.creator.borrow().to_circuit([self.index])
     }
 
+    // create circuit with translated input. List of input in iter.
     pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
     where
         T: std::hash::Hash,
