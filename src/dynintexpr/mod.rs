@@ -198,6 +198,39 @@ where
         )
     }
 
+    /// Create circuit with translated input. List of input in iter.
+    /// Aditional returned value is map to new list:
+    /// index - old position of variable in iter, value - new position in input list.
+    pub fn to_translated_circuit_with_map<I>(
+        &self,
+        iter: I,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        Vec<Option<<T as VarLit>::Unsigned>>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + std::cmp::Eq + PartialOrd,
+        <T as VarLit>::Unsigned: std::cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolExprNode<T>>,
+    {
+        use crate::boolexpr::input_map_to_input_list_with_map;
+        let (circuit, input_map) = self.to_circuit();
+        let (input_list, map) = input_map_to_input_list_with_map(input_map, iter);
+        (
+            gateutil::translate_inputs_rev(
+                circuit,
+                input_list.into_iter().map(|x| usize::try_from(x).unwrap()),
+            ),
+            map,
+        )
+    }
+
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = BoolExprNode<T>>,

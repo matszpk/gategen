@@ -248,6 +248,27 @@ where
         self.0.to_translated_circuit(iter.into_iter().map(|x| x.0))
     }
 
+    pub fn to_translated_circuit_with_map<I>(
+        &self,
+        iter: I,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        Vec<Option<<T as VarLit>::Unsigned>>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolVar<T>>,
+    {
+        self.0
+            .to_translated_circuit_with_map(iter.into_iter().map(|x| x.0))
+    }
+
     pub fn from_circuit<ITP: Into<Self>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = ITP>,

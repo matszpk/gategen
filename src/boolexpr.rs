@@ -184,6 +184,37 @@ where
         )
     }
 
+    /// Create circuit with translated input. List of input in iter.
+    /// Aditional returned value is map to new list:
+    /// index - old position of variable in iter, value - new position in input list.
+    pub fn to_translated_circuit_with_map<I>(
+        &self,
+        iter: I,
+    ) -> (
+        Circuit<<T as VarLit>::Unsigned>,
+        Vec<Option<<T as VarLit>::Unsigned>>,
+    )
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolExprNode<T>>,
+    {
+        let (circuit, input_map) = self.to_circuit();
+        let (input_list, map) = input_map_to_input_list_with_map(input_map, iter);
+        (
+            gateutil::translate_inputs_rev(
+                circuit,
+                input_list.into_iter().map(|x| usize::try_from(x).unwrap()),
+            ),
+            map,
+        )
+    }
+
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = Self>,
@@ -234,6 +265,50 @@ where
 {
     iter.map(|b| input_map[&b.varlit().unwrap()])
         .collect::<Vec<_>>()
+}
+
+/// Convert to input list.
+/// Aditional returned value is map to new list:
+/// index - old position of variable in iter, value - new position in input list.
+pub fn input_map_to_input_list_with_map<T, I>(
+    input_map: HashMap<T, <T as VarLit>::Unsigned>,
+    iter: I,
+) -> (
+    Vec<<T as VarLit>::Unsigned>,
+    Vec<Option<<T as VarLit>::Unsigned>>,
+)
+where
+    T: VarLit + Neg<Output = T> + std::hash::Hash + Debug,
+    isize: TryFrom<T>,
+    <T as VarLit>::Unsigned: TryFrom<usize>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+    I: Iterator<Item = BoolExprNode<T>>,
+{
+    let mut count = 0;
+    let (list, assigns): (
+        Vec<Option<<T as VarLit>::Unsigned>>,
+        Vec<Option<<T as VarLit>::Unsigned>>,
+    ) = iter
+        .map(|b| {
+            if let Some(x) = input_map.get(&b.varlit().unwrap()) {
+                let this_count = count;
+                count += 1;
+                (
+                    Some(*x),
+                    Some(<T as VarLit>::Unsigned::try_from(this_count).unwrap()),
+                )
+            } else {
+                (None, None)
+            }
+        })
+        .unzip();
+    (
+        list.into_iter().filter_map(|x| x).collect::<Vec<_>>(),
+        assigns,
+    )
 }
 
 /// An implementation Not for BoolExprNode.
@@ -1563,6 +1638,65 @@ mod tests {
                 HashMap::from_iter([(1, 0), (2, 1)])
             ),
             outs.to_circuit()
+        );
+    }
+
+    #[test]
+    fn test_input_map_to_input_list_with_map() {
+        let ec = ExprCreatorSys::new();
+        let inputs = (0..10)
+            .map(|_| BoolExprNode::variable(ec.clone()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            (vec![1, 3, 2, 0], vec![Some(0), Some(1), Some(2), Some(3)]),
+            input_map_to_input_list_with_map(
+                HashMap::from_iter([
+                    (inputs[0].varlit().unwrap(), 1),
+                    (inputs[2].varlit().unwrap(), 2),
+                    (inputs[5].varlit().unwrap(), 0),
+                    (inputs[7].varlit().unwrap(), 3),
+                ]),
+                [
+                    inputs[0].clone(),
+                    inputs[7].clone(),
+                    inputs[2].clone(),
+                    inputs[5].clone()
+                ]
+                .into_iter()
+            )
+        );
+        assert_eq!(
+            (vec![1, 2], vec![Some(0), None, Some(1), None]),
+            input_map_to_input_list_with_map(
+                HashMap::from_iter([
+                    (inputs[0].varlit().unwrap(), 1),
+                    (inputs[2].varlit().unwrap(), 2),
+                ]),
+                [
+                    inputs[0].clone(),
+                    inputs[7].clone(),
+                    inputs[2].clone(),
+                    inputs[5].clone()
+                ]
+                .into_iter()
+            )
+        );
+        assert_eq!(
+            (vec![4, 2, 1], vec![Some(0), Some(1), None, Some(2)]),
+            input_map_to_input_list_with_map(
+                HashMap::from_iter([
+                    (inputs[5].varlit().unwrap(), 1),
+                    (inputs[0].varlit().unwrap(), 4),
+                    (inputs[7].varlit().unwrap(), 2),
+                ]),
+                [
+                    inputs[0].clone(),
+                    inputs[7].clone(),
+                    inputs[2].clone(),
+                    inputs[5].clone()
+                ]
+                .into_iter()
+            )
         );
     }
 }
