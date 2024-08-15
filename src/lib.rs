@@ -57,3 +57,6 @@ mod intmacros;
 pub mod intvar;
 
 pub use generic_array;
+
+pub use gatesim;
+pub use gateutil;
