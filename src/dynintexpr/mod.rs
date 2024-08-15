@@ -35,7 +35,7 @@ pub use crate::intexpr::{
     IntModMulAssign, IntModNeg, IntModSub, IntModSubAssign, IntOrd, IntRol, IntRor,
 };
 use crate::{impl_int_ipty, impl_int_upty};
-use gatesim::Circuit;
+use crate::gatesim::Circuit;
 
 pub mod arith;
 pub use arith::*;

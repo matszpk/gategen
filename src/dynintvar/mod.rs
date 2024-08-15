@@ -36,7 +36,7 @@ pub use crate::intexpr::{
 };
 use crate::intvar::IntVar;
 use crate::{impl_int_ipty, impl_int_upty};
-use gatesim::Circuit;
+use crate::gatesim::Circuit;
 
 use crate::dynintexpr;
 

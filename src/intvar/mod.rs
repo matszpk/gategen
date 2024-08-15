@@ -32,7 +32,7 @@ use crate::dynintvar::DynIntVar;
 use crate::gate::{Literal, VarLit};
 use crate::intexpr::{IntError, IntExprNode};
 use crate::{impl_int_ipty, impl_int_ty1_lt_ty2, impl_int_upty};
-use gatesim::Circuit;
+use crate::gatesim::Circuit;
 
 use crate::intexpr;
 pub use crate::intexpr::traits::*;

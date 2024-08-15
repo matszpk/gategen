@@ -34,7 +34,7 @@ use crate::dynintexpr::DynIntExprNode;
 use crate::gate::{Literal, VarLit};
 use crate::int_utils::*;
 use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
-use gatesim::Circuit;
+use crate::gatesim::Circuit;
 
 /// Integer error.
 #[derive(thiserror::Error, Debug)]

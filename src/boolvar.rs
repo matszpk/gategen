@@ -27,7 +27,7 @@ use crate::boolexpr::BoolExprNode;
 pub use crate::boolexpr::{BoolEqual, BoolImpl};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::gate::{Literal, VarLit};
-use gatesim::Circuit;
+use crate::gatesim::Circuit;
 
 #[derive(thiserror::Error, Debug)]
 pub enum BoolVarError {

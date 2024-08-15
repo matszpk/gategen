@@ -27,7 +27,7 @@ use crate::boolexpr_creator::Node;
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 
 use crate::gate::{Literal, VarLit};
-use gatesim::{Circuit, GateFunc};
+use crate::gatesim::{Circuit, GateFunc};
 
 /// Equality operator for boolean expressions and boolean words.
 ///
@@ -978,7 +978,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gatesim::Gate;
+    use crate::gatesim::Gate;
 
     #[test]
     fn test_expr_node_varlit() {

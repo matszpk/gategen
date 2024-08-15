@@ -25,7 +25,7 @@ use std::rc::Rc;
 
 use crate::gate::{Literal, VarLit};
 
-use gatesim::{Circuit, Gate};
+use crate::gatesim::{Circuit, Gate};
 
 #[cfg(test)]
 macro_rules! test_println {

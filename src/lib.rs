@@ -42,6 +42,8 @@
 
 #![allow(unused_imports)]
 
+pub use gateutil::gatesim;
+
 pub mod gate;
 pub use gate::{Literal, VarLit};
 
@@ -58,5 +60,4 @@ pub mod intvar;
 
 pub use generic_array;
 
-pub use gatesim;
 pub use gateutil;
