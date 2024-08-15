@@ -30,9 +30,9 @@ use crate::boolvar::{BoolVar, EXPR_CREATOR_16, EXPR_CREATOR_32, EXPR_CREATOR_SYS
 use crate::dynintexpr::DynIntExprNode;
 use crate::dynintvar::DynIntVar;
 use crate::gate::{Literal, VarLit};
+use crate::gatesim::Circuit;
 use crate::intexpr::{IntError, IntExprNode};
 use crate::{impl_int_ipty, impl_int_ty1_lt_ty2, impl_int_upty};
-use crate::gatesim::Circuit;
 
 use crate::intexpr;
 pub use crate::intexpr::traits::*;
@@ -155,6 +155,23 @@ where
     {
         self.0
             .to_translated_circuit(iter.into_iter().map(|x| BoolExprNode::from(x)))
+    }
+
+    // create circuit with translated input and filled output. List of input in iter.
+    pub fn to_translated_and_filled_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + cmp::Eq + PartialOrd,
+        <T as VarLit>::Unsigned: cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolVar<T>>,
+    {
+        self.0
+            .to_translated_and_filled_circuit(iter.into_iter().map(|x| BoolExprNode::from(x)))
     }
 
     /// Create circuit with translated input. List of input in iter.

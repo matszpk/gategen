@@ -32,9 +32,9 @@ use crate::boolexpr::{bool_ite, half_adder, BoolExprNode};
 pub use crate::boolexpr_creator::{ExprCreator, ExprCreator32, ExprCreatorSys};
 use crate::dynintexpr::DynIntExprNode;
 use crate::gate::{Literal, VarLit};
+use crate::gatesim::Circuit;
 use crate::int_utils::*;
 use crate::{impl_int_bitop_assign, impl_int_ty1_lt_ty2};
-use crate::gatesim::Circuit;
 
 /// Integer error.
 #[derive(thiserror::Error, Debug)]
@@ -202,6 +202,37 @@ where
             circuit,
             input_list.into_iter().map(|x| usize::try_from(x).unwrap()),
         )
+    }
+
+    // create circuit with translated input and filled output. List of input in iter.
+    pub fn to_translated_and_filled_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
+    where
+        T: std::hash::Hash,
+        <T as VarLit>::Unsigned: Clone + Copy + PartialEq + cmp::Eq + PartialOrd,
+        <T as VarLit>::Unsigned: cmp::Ord + Default,
+        <T as VarLit>::Unsigned: TryFrom<usize>,
+        <<T as VarLit>::Unsigned as TryFrom<usize>>::Error: Debug,
+        <T as VarLit>::Unsigned: Debug,
+        usize: TryFrom<<T as VarLit>::Unsigned>,
+        <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
+        I: Iterator<Item = BoolExprNode<T>>,
+    {
+        let circuit = self.to_translated_circuit(iter);
+        use gateutil::{fill_outputs, OutputEntry};
+        let mut i = 0;
+        let out_map = self
+            .iter()
+            .map(|bv| {
+                if let Some(v) = bv.value() {
+                    OutputEntry::Value(v)
+                } else {
+                    let old_i = i;
+                    i += 1;
+                    OutputEntry::NewIndex(<T as VarLit>::Unsigned::try_from(old_i).unwrap())
+                }
+            })
+            .collect::<Vec<_>>();
+        fill_outputs(circuit, out_map)
     }
 
     /// Create circuit with translated input. List of input in iter.
