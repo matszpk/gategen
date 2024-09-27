@@ -622,8 +622,6 @@ where
     int_ite(t.clone().greater_than(e.clone()), t, e)
 }
 
-// TODO: add int_opt_table functions.
-
 /// Returns result of indexing of table with values.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
@@ -764,7 +762,7 @@ where
     use crate::boolexpr::{boolexpr_are_negated, boolexpr_are_same};
     let mut ites: Vec<BoolExprNode<T>> = vec![];
     let tbl = Vec::from_iter(table_iter);
-    // TODO: detect any repetitions in any step before generation
+    // detect any repetitions in any step before generation
     let mut iter = tbl.iter();
     while let Some(v) = iter.next() {
         if let Some(v2) = iter.next() {
