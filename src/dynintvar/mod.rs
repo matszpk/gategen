@@ -1134,7 +1134,7 @@ where
     dynint_ite(c.clone(), t.clone(), e.clone())
 }
 
-// Returns minimal value from two.
+/// Returns minimal value from two.
 pub fn dynint_min<T, const SIGN: bool>(
     t: DynIntVar<T, SIGN>,
     e: DynIntVar<T, SIGN>,
@@ -1150,7 +1150,7 @@ where
     DynIntVar(dynintexpr::dynint_min(t.0, e.0))
 }
 
-// Returns maximal value from two.
+/// Returns maximal value from two.
 pub fn dynint_max<T, const SIGN: bool>(
     t: DynIntVar<T, SIGN>,
     e: DynIntVar<T, SIGN>,

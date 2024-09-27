@@ -578,7 +578,7 @@ where
         | (<E as BitMask<<C as Not>::Output>>::bitmask(!c) & e)
 }
 
-// Returns minimal value from two.
+/// Returns minimal value from two.
 pub fn int_min<T, E>(t: T, e: E) -> <<T as BitAnd>::Output as BitOr<<E as BitAnd>::Output>>::Output
 where
     <T as traits::IntOrd<E>>::Output: Clone + Not,
@@ -589,7 +589,7 @@ where
     int_ite(t.clone().less_than(e.clone()), t, e)
 }
 
-// Returns maximal value from two.
+/// Returns maximal value from two.
 pub fn int_max<T, E>(t: T, e: E) -> <<T as BitAnd>::Output as BitOr<<E as BitAnd>::Output>>::Output
 where
     <T as traits::IntOrd<E>>::Output: Clone + Not,
