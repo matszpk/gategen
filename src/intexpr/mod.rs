@@ -719,7 +719,30 @@ where
     ites.pop().unwrap()
 }
 
-// int
+/// Returns result of indexing of table with values.
+///
+/// It perform operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_opt_table<T, N, K, I, const SIGN: bool>(
+    index: IntExprNode<T, K, SIGN>,
+    table_iter: I,
+) -> IntExprNode<T, N, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    N: ArrayLength<usize>,
+    K: ArrayLength<usize>,
+    I: IntoIterator<Item = IntExprNode<T, N, SIGN>>,
+{
+    let tbl = Vec::from_iter(table_iter);
+    IntExprNode::from_boolexprs(
+        (0..N::USIZE).map(|bit| int_opt_booltable(index.clone(), tbl.iter().map(|t| t.bit(bit)))),
+    )
+    .unwrap()
+}
 
 /// Returns result of indexing of table with values.
 ///
@@ -740,7 +763,7 @@ where
 {
     use crate::boolexpr::{boolexpr_are_negated, boolexpr_are_same};
     let mut ites: Vec<BoolExprNode<T>> = vec![];
-    let tbl = Vec::from_iter(table_iter.into_iter());
+    let tbl = Vec::from_iter(table_iter);
     // TODO: detect any repetitions in any step before generation
     let mut iter = tbl.iter();
     while let Some(v) = iter.next() {
