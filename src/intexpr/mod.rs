@@ -782,7 +782,7 @@ where
             panic!("Odd number of elements");
         }
         for i in 0..(ites.len() >> 1) {
-            let count = ites.len() << 1;
+            let count = i << (step + 1);
             let mut already_added = false;
             for k in (step + 1..K::USIZE).rev() {
                 let kbit = 1 << k;
@@ -793,14 +793,14 @@ where
                         .all(|x| boolexpr_are_same(&tbl[count + x], &tbl[count + x - kbit]))
                     {
                         // if are same
-                        ites.push(ites[(count - kbit) >> (step + 1)].clone());
+                        ites[i] = ites[(count - kbit) >> (step + 1)].clone();
                         already_added = true;
                         break;
                     } else if (0..(1 << (step + 1)))
                         .all(|x| boolexpr_are_negated(&tbl[count + x], &tbl[count + x - kbit]))
                     {
                         // if negated
-                        ites.push(!ites[(count - kbit) >> (step + 1)].clone());
+                        ites[i] = !ites[(count - kbit) >> (step + 1)].clone();
                         already_added = true;
                         break;
                     }
