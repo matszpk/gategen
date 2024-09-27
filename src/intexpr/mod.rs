@@ -622,6 +622,8 @@ where
     int_ite(t.clone().greater_than(e.clone()), t, e)
 }
 
+// TODO: add int_opt_table functions.
+
 /// Returns result of indexing of table with values.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
@@ -707,6 +709,110 @@ where
                 ites[(i << 1) + 1].clone(),
                 ites[i << 1].clone(),
             );
+        }
+        ites.resize(
+            ites.len() >> 1,
+            BoolExprNode::single_value(index.creator.clone(), false),
+        );
+    }
+
+    ites.pop().unwrap()
+}
+
+// int
+
+/// Returns result of indexing of table with values.
+///
+/// It performs operation: `table[index]`, where table given as object convertible to
+/// iterator of expressions.
+pub fn int_opt_booltable<T, K, I, const SIGN: bool>(
+    index: IntExprNode<T, K, SIGN>,
+    table_iter: I,
+) -> BoolExprNode<T>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+    K: ArrayLength<usize>,
+    I: IntoIterator<Item = BoolExprNode<T>>,
+{
+    use crate::boolexpr::{boolexpr_are_negated, boolexpr_are_same};
+    let mut ites: Vec<BoolExprNode<T>> = vec![];
+    let tbl = Vec::from_iter(table_iter.into_iter());
+    // TODO: detect any repetitions in any step before generation
+    let mut iter = tbl.iter();
+    while let Some(v) = iter.next() {
+        if let Some(v2) = iter.next() {
+            let count = ites.len() << 1;
+            let mut already_added = false;
+            for k in (1..K::USIZE).rev() {
+                let kbit = 1 << k;
+                // if odd in some bit level
+                if (count & kbit) != 0 {
+                    // check two pairs
+                    if boolexpr_are_same(&tbl[count], &tbl[count - kbit])
+                        && boolexpr_are_same(&tbl[count + 1], &tbl[count + 1 - kbit])
+                    {
+                        // if are same
+                        ites.push(ites[(count - kbit) >> 1].clone());
+                        already_added = true;
+                        break;
+                    } else if boolexpr_are_negated(&tbl[count], &tbl[count - kbit])
+                        && boolexpr_are_negated(&tbl[count + 1], &tbl[count + 1 - kbit])
+                    {
+                        // if negated
+                        ites.push(!ites[(count - kbit) >> 1].clone());
+                        already_added = true;
+                        break;
+                    }
+                }
+            }
+            if !already_added {
+                ites.push(bool_opt_ite(index.bit(0), v2.clone(), v.clone()));
+            }
+        } else {
+            panic!("Odd number of elements");
+        }
+    }
+
+    for step in 1..K::USIZE {
+        if (ites.len() & 1) != 0 {
+            panic!("Odd number of elements");
+        }
+        for i in 0..(ites.len() >> 1) {
+            let count = ites.len() << 1;
+            let mut already_added = false;
+            for k in (step + 1..K::USIZE).rev() {
+                let kbit = 1 << k;
+                // if odd in some bit level
+                if (count & kbit) != 0 {
+                    // check two pairs
+                    if (0..(1 << (step + 1)))
+                        .all(|x| boolexpr_are_same(&tbl[count + x], &tbl[count + x - kbit]))
+                    {
+                        // if are same
+                        ites.push(ites[(count - kbit) >> (step + 1)].clone());
+                        already_added = true;
+                        break;
+                    } else if (0..(1 << (step + 1)))
+                        .all(|x| boolexpr_are_negated(&tbl[count + x], &tbl[count + x - kbit]))
+                    {
+                        // if negated
+                        ites.push(!ites[(count - kbit) >> (step + 1)].clone());
+                        already_added = true;
+                        break;
+                    }
+                }
+            }
+            if !already_added {
+                ites[i] = bool_opt_ite(
+                    index.bit(step),
+                    ites[(i << 1) + 1].clone(),
+                    ites[i << 1].clone(),
+                );
+            }
         }
         ites.resize(
             ites.len() >> 1,
