@@ -768,7 +768,7 @@ where
         if let Some(v2) = iter.next() {
             let count = ites.len() << 1;
             let mut already_added = false;
-            for k in (1..K::USIZE).rev() {
+            for k in 1..K::USIZE {
                 let kbit = 1 << k;
                 // if odd in some bit level
                 if (count & kbit) != 0 {
@@ -805,7 +805,7 @@ where
         for i in 0..(ites.len() >> 1) {
             let count = i << (step + 1);
             let mut already_added = false;
-            for k in (step + 1..K::USIZE).rev() {
+            for k in step + 1..K::USIZE {
                 let kbit = 1 << k;
                 // if odd in some bit level
                 if (count & kbit) != 0 {
