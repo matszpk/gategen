@@ -1379,10 +1379,11 @@ where
 
 // optimized version
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_table<T, I, const SIGN: bool>(
     index: DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1401,11 +1402,12 @@ where
     ))
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_table_partial<T, I, const SIGN: bool>(
     index: DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1433,10 +1435,11 @@ where
     ))
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_booltable<T, I, const SIGN: bool>(
     index: DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1455,11 +1458,12 @@ where
     ))
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_booltable_partial<T, I, BTP, const SIGN: bool>(
     index: DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1606,10 +1610,11 @@ where
 
 // optimized version
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_table_r<T, I, const SIGN: bool>(
     index: &DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1625,11 +1630,12 @@ where
     dynint_opt_table(index.clone(), table_iter)
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_table_partial_r<T, I, const SIGN: bool>(
     index: &DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1646,10 +1652,11 @@ where
     dynint_opt_table_partial(index.clone(), table_iter, fill.clone())
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_booltable_r<T, I, const SIGN: bool>(
     index: &DynIntVar<T, SIGN>,
     table_iter: I,
@@ -1665,11 +1672,12 @@ where
     dynint_opt_booltable::<T, I, SIGN>(index.clone(), table_iter)
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions. Table can have partial length. fill - is item to fill rest of
 /// required space in table.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_booltable_partial_r<T, I, const SIGN: bool>(
     index: &DynIntVar<T, SIGN>,
     table_iter: I,

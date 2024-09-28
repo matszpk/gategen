@@ -805,10 +805,11 @@ where
 
 // optimized version
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It perform operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_table<T, I, const SIGN: bool>(
     index: DynIntExprNode<T, SIGN>,
     table_iter: I,
@@ -828,10 +829,11 @@ where
     )
 }
 
-/// Returns result of indexing of table with values.
+/// Returns result of indexing of table with values. Optimized version.
 ///
 /// It performs operation: `table[index]`, where table given as object convertible to
 /// iterator of expressions.
+/// This optimized version reduces duplicates and negations.
 pub fn dynint_opt_booltable<T, I, const SIGN: bool>(
     index: DynIntExprNode<T, SIGN>,
     table_iter: I,
