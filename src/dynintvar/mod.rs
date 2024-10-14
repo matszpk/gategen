@@ -417,6 +417,20 @@ impl_int_conv!(i16, EXPR_CREATOR_16);
 impl_int_conv!(i32, EXPR_CREATOR_32);
 impl_int_conv!(isize, EXPR_CREATOR_SYS);
 
+impl<T: VarLit, const SIGN: bool> FromNSized<BoolVar<T>> for DynIntVar<T, SIGN>
+where
+    T: VarLit + Neg<Output = T> + Debug,
+    isize: TryFrom<T>,
+    <T as TryInto<usize>>::Error: Debug,
+    <T as TryFrom<usize>>::Error: Debug,
+    <isize as TryFrom<T>>::Error: Debug,
+{
+    /// Put boolean as first bit of integer.
+    fn from_n(v: BoolVar<T>, n: usize) -> Self {
+        Self(DynIntExprNode::<T, SIGN>::try_from_n(BoolExprNode::<T>::from(v), n).unwrap())
+    }
+}
+
 /// Allow to create constant sized from self
 pub trait SelfConstant<T>: Sized {
     fn constant(&self, v: T) -> Self;
