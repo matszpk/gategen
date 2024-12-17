@@ -1350,7 +1350,7 @@ where
     ))
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn dynint_demux<T, const SIGN: bool>(
@@ -1370,7 +1370,7 @@ where
         .collect::<Vec<_>>()
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn dynint_booldemux<T, BTP, const SIGN: bool>(
@@ -1588,7 +1588,7 @@ where
     dynint_booltable_partial::<T, I, BoolVar<T>, SIGN>(index.clone(), table_iter, fill.clone())
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn dynint_demux_r<T, const SIGN: bool>(
@@ -1605,7 +1605,7 @@ where
     dynint_demux(index.clone(), value.clone())
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn dynint_booldemux_r<T, const SIGN: bool>(

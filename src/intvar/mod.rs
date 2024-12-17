@@ -1426,7 +1426,7 @@ where
     ))
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn int_demux<T, N, K, const SIGN: bool>(
@@ -1448,7 +1448,7 @@ where
         .collect::<Vec<_>>()
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn int_booldemux<T, K, BTP, const SIGN: bool>(
@@ -1677,7 +1677,7 @@ where
     int_booltable_partial::<T, K, I, BoolVar<T>, SIGN>(index.clone(), table_iter, fill.clone())
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn int_demux_r<T, N, K, const SIGN: bool>(
@@ -1696,7 +1696,7 @@ where
     int_demux(index.clone(), value.clone())
 }
 
-/// Demulitplexer - returns list of outputs of demulitplexer.
+/// Demultiplexer - returns list of outputs of demultiplexer.
 ///
 /// It performs operation: `[i==0 & v, i==1 & v, i==2 & v,....]`.
 pub fn int_booldemux_r<T, K, const SIGN: bool>(
