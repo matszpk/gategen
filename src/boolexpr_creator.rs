@@ -23,6 +23,8 @@ use std::fmt::Debug;
 use std::ops::Neg;
 use std::rc::Rc;
 
+// TODO: Add ability to generate by order of expression instead by tree of output.
+
 use crate::gate::{Literal, VarLit};
 
 use crate::gatesim::{Circuit, Gate};
