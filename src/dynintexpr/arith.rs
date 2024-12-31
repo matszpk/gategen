@@ -117,7 +117,6 @@ where
 
     fn shl(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         // check whether zeroes in sign and in unused bits in Rhs
@@ -157,7 +156,6 @@ where
 
     fn cond_shl(self, rhs: DynIntExprNode<T, false>) -> (Self::Output, Self::OutputCond) {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         let nbits = cmp::min(nbits, n2);
@@ -190,7 +188,6 @@ where
 
     fn cond_shl(self, rhs: DynIntExprNode<T, true>) -> (Self::Output, Self::OutputCond) {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         let nbits = cmp::min(nbits, n2 - 1);
@@ -258,7 +255,6 @@ where
 
     fn shr(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         // check whether zeroes in sign and in unused bits in Rhs
@@ -298,7 +294,6 @@ where
 
     fn cond_shr(self, rhs: DynIntExprNode<T, false>) -> (Self::Output, Self::OutputCond) {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         let nbits = cmp::min(nbits, n2);
@@ -331,7 +326,6 @@ where
 
     fn cond_shr(self, rhs: DynIntExprNode<T, true>) -> (Self::Output, Self::OutputCond) {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         let nbits = cmp::min(nbits, n2 - 1);
@@ -452,7 +446,6 @@ where
 
     fn rotate_left(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         // check whether zeroes in sign and in unused bits in Rhs
@@ -525,7 +518,6 @@ where
 
     fn rotate_right(self, rhs: DynIntExprNode<T, SIGN2>) -> Self::Output {
         let n = self.indexes.len();
-        assert_ne!(n, 0);
         let n2 = rhs.indexes.len();
         let nbits = calc_log_bits(n);
         // check whether zeroes in sign and in unused bits in Rhs
