@@ -16,8 +16,6 @@ and `DynIntExprNode`. BoolExprNode allow to construct boolean expressions.
 `IntExprNode` and `DynIntExprNode` allow to construct integer expressions or multiple
 bit expressions.
 
-Samples of usage of these modules can be found in documentation of these modules.
-
 Typical usage of this library is: construction boolean expression and write it by using
 method `to_circuit` or other similar method from an expression object to generate
 Gate circuit.
@@ -37,4 +35,73 @@ constants be converted into one of that type by using From trait.
 This version contains `min` and `max` helpers, new an optimized tables and If-Then-Else and
 and additional `subvalues` method to dynamic integers.
 
-Samples of usage of these modules can be found in documentation of these modules.
+Sample example in new interface:
+
+```
+use gate_calc_log_bits::*;
+use gategen::boolvar::*;
+use gategen::dynintvar::*;
+use gategen::*;
+use gatesim::*;
+
+// program that generates circuit that check whether number 'a' (encoded in cirucit) is
+// divisible by input number ('half_x').
+fn main() {
+    let a: u128 = 458581; // some number.
+    // calculate bits for 'a' number.
+    let bits = calc_log_bits_u128(a);
+    // use half of bits to calculate bits of square root of number.
+    let half_bits = (bits + 1) >> 1;
+    // call a generating routine in callsys to.
+    let circuit = callsys(|| {
+        // x have half of bits of 'a' number.
+        let half_x = UDynVarSys::var(half_bits);
+        let a = UDynVarSys::from_n(a, bits);
+        let x = half_x
+            .clone()
+            .concat(UDynVarSys::from_n(0u8, bits - half_bits));
+        // calculate modulo: a modulo x.
+        let (res_mod, cond) = a % &x;
+        // formula: modulo must be 0 and x must be 0 (from cond) and must x != 1.
+        let formula = res_mod.equal(0u8) & cond & x.nequal(1u8);
+        formula.to_translated_circuit(half_x.iter())
+    });
+    print!("{}", FmtLiner::new(&circuit, 4, 8));
+}
+```
+
+Sample example in older interface:
+
+```
+use gate_calc_log_bits::*;
+use gategen::boolexpr::*;
+use gategen::dynintexpr::*;
+use gategen::*;
+use gatesim::*;
+
+// program that generates circuit that check whether number 'a' (encoded in cirucit) is
+// divisible by input number ('half_x').
+fn main() {
+    let a: u128 = 557681; // some number.
+    // calculate bits for 'a' number.
+    let bits = calc_log_bits_u128(a);
+    // use half of bits to calculate bits of square root of number.
+    let half_bits = (bits + 1) >> 1;
+    let creator = ExprCreatorSys::new();
+    // x have half of bits of 'a' number.
+    let half_x = UDynExprNode::variable(creator.clone(), half_bits);
+    let a = UDynExprNode::try_constant_n(creator.clone(), bits, a).unwrap();
+    let x = half_x
+        .clone()
+        .concat(UDynExprNode::try_constant_n(creator.clone(), bits - half_bits, 0u8).unwrap());
+    // calculate modulo: a modulo x.
+    let (res_mod, cond) = a % x.clone();
+    // zero and one - constant values.
+    let zero = UDynExprNode::try_constant_n(creator.clone(), bits, 0u8).unwrap();
+    let one = UDynExprNode::try_constant_n(creator.clone(), bits, 1u8).unwrap();
+    // formula: modulo must be 0 and x must be 0 (from cond) and must x != 1.
+    let formula: BoolExprNode<_> = res_mod.equal(zero) & cond & x.clone().nequal(one.clone());
+    let circuit = formula.to_translated_circuit(half_x.iter());
+    print!("{}", FmtLiner::new(&circuit, 4, 8));
+}
+```
