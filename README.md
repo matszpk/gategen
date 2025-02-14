@@ -62,7 +62,7 @@ fn main() {
             .concat(UDynVarSys::from_n(0u8, bits - half_bits));
         // calculate modulo: a modulo x.
         let (res_mod, cond) = a % &x;
-        // formula: modulo must be 0 and x must be 0 (from cond) and must x != 1.
+        // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
         let formula = res_mod.equal(0u8) & cond & x.nequal(1u8);
         formula.to_translated_circuit(half_x.iter())
     });
@@ -99,7 +99,7 @@ fn main() {
     // zero and one - constant values.
     let zero = UDynExprNode::try_constant_n(creator.clone(), bits, 0u8).unwrap();
     let one = UDynExprNode::try_constant_n(creator.clone(), bits, 1u8).unwrap();
-    // formula: modulo must be 0 and x must be 0 (from cond) and must x != 1.
+    // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
     let formula: BoolExprNode<_> = res_mod.equal(zero) & cond & x.clone().nequal(one.clone());
     let circuit = formula.to_translated_circuit(half_x.iter());
     print!("{}", FmtLiner::new(&circuit, 4, 8));
