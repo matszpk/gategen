@@ -158,6 +158,11 @@ where
     new_xxx!(new_equal, Equal);
     new_xxx!(new_impl, Impl);
 
+    /// Generates circuit for given variables.
+    ///
+    /// The `outputs` is list of output variable indices.
+    /// It returns circuit and mapping of that circuit's inputs (key is circuit's input index,
+    /// value is variable literal from expression creator).
     pub fn to_circuit(
         &self,
         outputs: impl IntoIterator<Item = usize>,

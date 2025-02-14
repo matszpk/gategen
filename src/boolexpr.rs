@@ -129,6 +129,10 @@ where
         }
     }
 
+    /// Generates circuit for given self (as output) variable.
+    ///
+    /// It returns circuit and mapping of that circuit's inputs (key is circuit's input index,
+    /// value is variable literal from expression creator).
     pub fn to_circuit(
         &self,
     ) -> (
@@ -148,6 +152,11 @@ where
     }
 
     // create circuit with translated input. List of input in iter.
+
+    /// Generates circuit for given self (as output) variable.
+    ///
+    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// It returns circuit with proper input mapping.
     pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
     where
         T: std::hash::Hash,
@@ -167,9 +176,12 @@ where
         )
     }
 
-    /// Create circuit with translated input. List of input in iter.
-    /// Aditional returned value is map to new list:
-    /// index - old position of variable in iter, value - new position in input list.
+    /// Generates circuit for given self (as output) variable.
+    ///
+    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// It returns circuit with proper input mapping and input mapping:
+    /// index - old position of variable in iter, value - new position in input list or None if
+    /// input not included.
     pub fn to_translated_circuit_with_map<I>(
         &self,
         iter: I,
@@ -198,6 +210,10 @@ where
         )
     }
 
+    /// Creates expression from circuit and inputs.
+    ///
+    /// The `circuit` is circuit to create as expression. The `inputs` is input assignment to
+    /// circuit's inputs. It returns list of expressions that reflects circuit outputs.
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = Self>,
@@ -273,7 +289,9 @@ where
     false
 }
 
-/// Convert to input list.
+/// Convert given `iter` list of bolean expressions nodes to input list.
+///
+/// Maps `iter` to varlit indices from variable literal in input_map.
 pub fn input_map_to_input_list<T, I>(
     input_map: HashMap<T, <T as VarLit>::Unsigned>,
     iter: I,
@@ -291,8 +309,10 @@ where
 }
 
 /// Convert to input list.
+///
 /// Aditional returned value is map to new list:
-/// index - old position of variable in iter, value - new position in input list.
+/// index - old position of variable in iter, value - new position in input list or None if
+/// input not included.
 pub fn input_map_to_input_list_with_map<T, I>(
     input_map: HashMap<T, <T as VarLit>::Unsigned>,
     iter: I,
