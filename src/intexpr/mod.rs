@@ -144,6 +144,10 @@ where
         }
     }
 
+    /// Generates circuit for given self (as outputs) variable.
+    ///
+    /// It returns circuit and mapping of that circuit's inputs (key is circuit's input index,
+    /// value is variable literal from expression creator).
     pub fn to_circuit(
         &self,
     ) -> (
@@ -166,6 +170,12 @@ where
     }
 
     // create circuit with translated input. List of input in iter.
+
+    /// Generates circuit for given self (as outputs) variable.
+    ///
+    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// It returns circuit with proper input mapping. Some outputs can be omitted
+    /// if they have constant value.
     pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
     where
         T: std::hash::Hash,
@@ -188,6 +198,12 @@ where
     }
 
     // create circuit with translated input and filled output. List of input in iter.
+
+    /// Generates circuit for given self (as outputs) variable.
+    ///
+    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// It returns circuit with proper input mapping and with filled outputs which
+    /// are calculated to constants. Finally all outputs will be in circuit.
     pub fn to_translated_and_filled_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
     where
         T: std::hash::Hash,
@@ -218,9 +234,13 @@ where
         fill_outputs(circuit, out_map)
     }
 
-    /// Create circuit with translated input. List of input in iter.
-    /// Aditional returned value is map to new list:
-    /// index - old position of variable in iter, value - new position in input list.
+    /// Generates circuit for given self (as output) variable.
+    ///
+    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// It returns circuit with proper input mapping and input mapping:
+    /// index - old position of variable in iter, value - new position in input list or None if
+    /// input not included. Some outputs can be omitted
+    /// if they have constant value.
     pub fn to_translated_circuit_with_map<I>(
         &self,
         iter: I,
@@ -251,6 +271,10 @@ where
         )
     }
 
+    /// Creates integer expression from circuit and inputs.
+    ///
+    /// The `circuit` is circuit to create as expression. The `inputs` is input assignment to
+    /// circuit's inputs. It returns list of expressions that reflects circuit outputs.
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = BoolExprNode<T>>,
