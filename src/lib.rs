@@ -46,7 +46,7 @@
 //! use gatesim::*;
 //!
 //! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
-//! // divisible by input number ('half_x').
+//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
 //! fn main() {
 //!     let a: u128 = 458581; // some number.
 //!     // calculate bits for 'a' number.
@@ -81,7 +81,7 @@
 //! use gatesim::*;
 //!
 //! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
-//! // divisible by input number ('half_x').
+//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
 //! fn main() {
 //!     let a: u128 = 557681; // some number.
 //!     // calculate bits for 'a' number.
