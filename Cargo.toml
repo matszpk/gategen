@@ -1,7 +1,14 @@
 [package]
 name = "gategen"
+authors = ["Mateusz Szpakowski"]
+license = "Apache-2.0"
 version = "0.1.0"
 edition = "2021"
+description = "The library to generate Gate circuits."
+repository = "https://github.com/matszpk/gategen"
+documentation = "https://docs.rs/gategen"
+keywords = ["gate", "logic", "circuit"]
+categories = ["science", "mathematics"]
 
 [dependencies]
 gateutil = { version="0.1.0", path="../gateutil" }
@@ -9,3 +16,7 @@ gate_calc_log_bits = { path="../gate_calc_log_bits", version="0.1.0" }
 itoap = "1.0"
 thiserror = "1.0"
 generic-array = "0.14"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
