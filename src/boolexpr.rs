@@ -4,7 +4,25 @@
 //! The module to generate Gate circuits from boolean expressions.
 //!
 //! This module contains traits and main structure to operate on boolean expressions:
-//! `BoolExprNode`.
+//! `BoolExprNode`.The same `BoolExprNode` can be used in following way:
+//!
+//! ```
+//! use gategen::boolexpr::*;
+//! use gateutil::gatesim::*;
+//! fn simple_expr_generator() -> Circuit<u32> {
+//!     // define ExprCreator.
+//!     let creator = ExprCreator32::new();
+//!     // define variables.
+//!     let x1 = BoolExprNode::variable(creator.clone());
+//!     let x2 = BoolExprNode::variable(creator.clone());
+//!     let x3 = BoolExprNode::variable(creator.clone());
+//!     let x4 = BoolExprNode::variable(creator.clone());
+//!     // define final expression: x1 => ((x2 xor x3) == (x3 and x4)).
+//!     let expr = x1.clone().imp((x2.clone() ^ x3.clone()).bequal(x3.clone() & x4.clone()));
+//!     // generate Gate circuit.
+//!     expr.to_translated_circuit([x1, x2, x3, x4].into_iter())
+//! }
+//! ```
 //!
 //! Same BoolExprNode can be used to build boolean expressions by using operators.
 //! Additional traits provides two extra operators: a material implication and a bolean equality.

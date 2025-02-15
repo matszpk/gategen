@@ -6,6 +6,27 @@
 //! This is new module to handle expressions better than boolexpr. It allow to use
 //! references and other types. To write some formula `call16`, `call32` or `callsys` should be
 //! used to call routine that generates formula by using this module.
+//!
+//! Simple example:
+//!
+//! ```
+//! use gategen::boolvar::*;
+//! use gateutil::gatesim::*;
+//! fn simple_expr_generator() -> Circuit<u32> {
+//!     // define ExprCreator.
+//!     call32(|| {
+//!         // define variables.
+//!         let x1 = BoolVar32::var();
+//!         let x2 = BoolVar32::var();
+//!         let x3 = BoolVar32::var();
+//!         let x4 = BoolVar32::var();
+//!         // define final expression: x1 => ((x2 xor x3) == (x3 and x4)).
+//!         let expr = (&x1).imp((&x2 ^ &x3).bequal(&x3 & &x4));
+//!         // generate Gate circuit.
+//!         expr.to_translated_circuit([x1, x2, x3, x4].into_iter())
+//!    })
+//! }
+//! ```
 
 use std::cell::RefCell;
 use std::collections::HashMap;
