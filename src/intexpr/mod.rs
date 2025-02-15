@@ -329,7 +329,7 @@ where
 
     /// Generates circuit for given self (as outputs) variable.
     ///
-    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// An `iter` is list of inputs that should be mapped into circuit inputs.
     /// It returns circuit with proper input mapping. Some outputs can be omitted
     /// if they have constant value.
     pub fn to_translated_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
@@ -357,7 +357,7 @@ where
 
     /// Generates circuit for given self (as outputs) variable.
     ///
-    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// An `iter` is list of inputs that should be mapped into circuit inputs.
     /// It returns circuit with proper input mapping and with filled outputs which
     /// are calculated to constants. Finally all outputs will be in circuit.
     pub fn to_translated_and_filled_circuit<I>(&self, iter: I) -> Circuit<<T as VarLit>::Unsigned>
@@ -392,7 +392,7 @@ where
 
     /// Generates circuit for given self (as output) variable.
     ///
-    /// The `iter` is list of inputs that should be mapped into circuit inputs.
+    /// An `iter` is list of inputs that should be mapped into circuit inputs.
     /// It returns circuit with proper input mapping and input mapping:
     /// index - old position of variable in iter, value - new position in input list or None if
     /// input not included. Some outputs can be omitted
@@ -429,7 +429,7 @@ where
 
     /// Creates integer expression from circuit and inputs.
     ///
-    /// The `circuit` is circuit to create as expression. The `inputs` is input assignment to
+    /// A `circuit` is circuit to create as expression. An `inputs` is input assignment to
     /// circuit's inputs. It returns list of expressions that reflects circuit outputs.
     pub fn from_circuit(
         circuit: Circuit<<T as VarLit>::Unsigned>,
