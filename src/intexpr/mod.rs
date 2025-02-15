@@ -38,6 +38,71 @@
 //! `332.mod_mul(x1)`. The method `constant` provide simple way to convert integer
 //! into an expression node (IntExprNode).
 //!
+//! Bit complex example:
+//!
+//! ```
+//! use gategen::boolexpr::*;
+//! use gategen::generic_array::typenum::*;
+//! use gategen::intexpr::*;
+//! use gategen::*;
+//! use gatesim::*;
+//! 
+//! // simple ALU circuit:
+//! fn main() {
+//!     let ec = ExprCreator32::new();
+//!     // create new variables of ALU
+//!     let a = U8ExprNode::<i32>::variable(ec.clone());
+//!     let b = U8ExprNode::<i32>::variable(ec.clone());
+//!     let c = UExprNode::<i32, U4>::variable(ec.clone());
+//!     // calculate operations:
+//!     // calculate A + B
+//!     let c0 = a.clone().mod_add(b.clone());
+//!     // calculate A - B
+//!     let c1 = a.clone().mod_sub(b.clone());
+//!     // calculate A + !B
+//!     let c2 = a.clone().mod_add(!b.clone());
+//!     // calculate B - A
+//!     let c3 = b.clone().mod_sub(a.clone());
+//!     // calculate A & B
+//!     let c4 = a.clone() & b.clone();
+//!     // calculate !A & B
+//!     let c5 = !a.clone() & b.clone();
+//!     // calculate A & !B
+//!     let c6 = a.clone() & !b.clone();
+//!     // calculate !A & !B
+//!     let c7 = !a.clone() & !b.clone();
+//!     // calculate A | B
+//!     let c8 = a.clone() | b.clone();
+//!     // calculate !A | B
+//!     let c9 = !a.clone() | b.clone();
+//!     // calculate A | !B
+//!     let ca = a.clone() | !b.clone();
+//!     // calculate !A | !B
+//!     let cb = !a.clone() | !b.clone();
+//!     // calculate A ^ B
+//!     let cc = a.clone() ^ b.clone();
+//!     // calculate !A ^ B
+//!     let cd = !a.clone() ^ b.clone();
+//!     // calculate !(A & B)
+//!     let ce = !(a.clone() & b.clone());
+//!     // calculate !(A | B)
+//!     let cf = !(a.clone() | b.clone());
+//!     // calculate ALU result in 'out'.
+//!     let out = int_table(
+//!         // selector of ALU operations is lower 4 bits of 'c'.
+//!         c.clone(),
+//!         // list of operations: if c0==0 then c0,....
+//!         [
+//!             c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, ca, cb, cc, cd, ce, cf,
+//!         ],
+//!     );
+//!     // generate circuit
+//!     let circuit = out.to_translated_circuit(a.concat(b).concat(c).iter());
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
+//! }
+//! ```
+//!
 //! ## Conditional operations.
 //!
 //! Conditional operations defined by `IntCondXXX` traits is specific type of operations that

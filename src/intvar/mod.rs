@@ -28,6 +28,73 @@
 //! automatically. It just possible to write: `a + 12u8` and `a` can have any length.
 //! If conversion fails then program panicked.
 //!
+//! Bit more complex example:
+//! ```
+//! use gategen::boolvar::*;
+//! use gategen::intvar::*;
+//! use gategen::*;
+//! use gatesim::*;
+//! 
+//! // simple ALU circuit:
+//! fn main() {
+//!     let circuit = call32(|| {
+//!         // create new variables of ALU
+//!         let a = U8Var32::var();
+//!         let b = U8Var32::var();
+//!         let c = U4Var32::var();
+//!         let out = {
+//!             let a = &a;
+//!             let b = &b;
+//!             // calculate operations:
+//!             // calculate A + B
+//!             let c0 = a + b;
+//!             // calculate A - B
+//!             let c1 = a - b;
+//!             // calculate A + !B
+//!             let c2 = a + !b;
+//!             // calculate B - A
+//!             let c3 = b - a;
+//!             // calculate A & B
+//!             let c4 = a & b;
+//!             // calculate !A & B
+//!             let c5 = !a & b;
+//!             // calculate A & !B
+//!             let c6 = a & !b;
+//!             // calculate !A & !B
+//!             let c7 = !a & !b;
+//!             // calculate A | B
+//!             let c8 = a | b;
+//!             // calculate !A | B
+//!             let c9 = !a | b;
+//!             // calculate A | !B
+//!             let ca = a | !b;
+//!             // calculate !A | !B
+//!             let cb = !a | !b;
+//!             // calculate A ^ B
+//!             let cc = a ^ b;
+//!             // calculate !A ^ B
+//!             let cd = !a ^ b;
+//!             // calculate !(A & B)
+//!             let ce = !(a & b);
+//!             // calculate !(A | B)
+//!             let cf = !(a | b);
+//!             // calculate ALU result in 'out'.
+//!             int_table(
+//!                 // selector of ALU operations is lower 4 bits of 'c'.
+//!                 c.clone(),
+//!                 // list of operations: if c0==0 then c0,....
+//!                 [
+//!                     c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, ca, cb, cc, cd, ce, cf,
+//!                 ],
+//!             )
+//!         };
+//!         // generate circuit
+//!         out.to_translated_circuit(a.concat(b).concat(c).iter())
+//!     });
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
+//! }
+//! ```
 
 use std::cmp;
 use std::collections::HashMap;
