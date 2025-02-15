@@ -1,5 +1,34 @@
 // mod.rs - integer expression structures.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from integer expressions better than 'intexpr'.
+//!
+//! The module to generate Gate circuits from integer expressions better than `intexpr` module.
+//! It offers same functionality as `intexpr`, reference support, simpler conversion
+//! from integers, improved concatenation, standard binary arithmetic operators overloading.
+//! To write some formula `boolvar::call16`, `boolvar::call32` or `boolvar::callsys` should be
+//! used to call routine that generates formula by using this module.
+//!
+//! Three generic parameters determines type of IntVar.
+//! The first T parameter is just variable literal type - it can be omitted.
+//! The second parameter is typed integer (from typenum crate) that determine number of bits
+//! of integer. The last parameter is sign - true if signed integer or false if unsigned integer.
+//! Type of IntVar can be written in form: `IntVar<i32, U12, false>` -
+//! IntVar for 12-bit unsigned integer with 32-bit variable literals.
+//!
+//! Predefined types: {S}{N}Var{T}. S is signess (I - signed, U - unsigned).
+//! N is number of bits, T is length of literal {16, 32, Sys - isize).
+//!
+//! IMPORTANT: About overloading standard arithmetic operators. Any operations done in modular
+//! arithmetic without checking carry, overflow and underflow. Therefore IntVar type should be
+//! treat as modular arithmetic type.
+//!
+//! About usage of immediates with `IntVar`. it easier than in `IntExprNode`. Regardless
+//! what is length of integer, any conversion from integer with same signess be done
+//! automatically. It just possible to write: `a + 12u8` and `a` can have any length.
+//! If conversion fails then program panicked.
+//!
+
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;

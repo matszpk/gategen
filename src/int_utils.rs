@@ -1,7 +1,7 @@
 // int_utils.rs - integer utilities
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module to generate CNF clauses from integer expressions.
+//! The module to generate Gate circuits from integer expressions.
 
 use std::cell::RefCell;
 use std::fmt::Debug;

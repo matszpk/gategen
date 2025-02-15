@@ -1,5 +1,14 @@
 // boolexpr.rs - boolean expression structures.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from boolean expressions.
+//!
+//! This module contains traits and main structure to operate on boolean expressions:
+//! `BoolExprNode`.
+//!
+//! Same BoolExprNode can be used to build boolean expressions by using operators.
+//! Additional traits provides two extra operators: a material implication and a bolean equality.
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;

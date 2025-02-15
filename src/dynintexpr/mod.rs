@@ -1,5 +1,33 @@
 // dynintexpr.rs - dynamic integer expression structures.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from dynamic integer expressions.
+//!
+//! This module contains traits and main structure to operate on integer expressions:
+//! `DynIntExprNode`. It is similar to IntExprNode, but have some specific features.
+//! Size of integer can be defined dynamically at runtime. This type can be used while
+//! writing generators which generates formula from source in higher-level language.
+//!
+//! Two generic parameters determines type of DynIntExprNode.
+//! The first T parameter is just variable literal type - it can be omitted.
+//! The second parameter is sign - true if signed integer or false if unsigned integer.
+//! Type of DynIntExprNode can be written in form: `DynIntExprNode<i32, false>` -
+//! DynIntExprNode for unsigned integer with 32-bit variable literals.
+//! You can use `IDynExprNode` or `UDynExprNode` to omit second parameter.
+//!
+//! Operations on this expression node are similar to operations that can be done on
+//! IntExprNode, except integer constant that can't be joined with DynIntExprNode.
+//! However, it is possible conversion from integer into DynIntExprNode thanks
+//! `TryIntConstantN` trait that provides method to that conversion.
+//!
+//! Look up module `intexpr` to figure out about possible operations.
+//!
+//! ## Conversion between types.
+//!
+//! It is possible conversion between various DynIntExprNodes that have various sizes and signs.
+//! Conversions are implemented by using `TryFromNSized` traits which define
+//! a method 'try_from_n` where argument `n` defines bits of destination.
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;

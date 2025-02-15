@@ -1,5 +1,31 @@
 // dynintexpr.rs - dynamic integer expression structures.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from dynamic integer expressions better than 'dynintexpr'.
+//!
+//! The module to generate Gate circuits from integer expressions better than `dynintexpr` module.
+//! It offers same functionality as `intexpr`, reference support, immediates handling,
+//! simpler conversion from integers, improved concatenation,
+//! standard binary arithmetic operators overloading.
+//! To write some formula `boolvar::call16`, `boolvar::call32` or `boolvar::callsys` should be
+//! used to call routine that generates formula by using this module.
+//!
+//! Two generic parameters determines type of DynIntVar.
+//! The first T parameter is just variable literal type - it can be omitted.
+//! The second parameter is sign - true if signed integer or false if unsigned integer.
+//! Type of DynIntExprNode can be written in form: `DynIntVar<i32, false>` -
+//! DynIntVar for unsigned integer with 32-bit variable literals.
+//!
+//! You can use `IDynExprNode` or `UDynExprNode` to omit second parameter.
+//! IMPORTANT: About overloading standard arithmetic operators. Any operations done in modular
+//! arithmetic without checking carry, overflow and underflow. Therefore DynIntVar type should be
+//! treat as modular arithmetic type.
+//!
+//! About usage of immediates with `DynIntVar`. it easier than in `DynIntExprNode`. Regardless
+//! what is length of integer, any conversion from integer with same signess will be done
+//! automatically. It just possible to write: `a + 12u8` and `a` can have any length.
+//! If conversion fails then program panicked.
+
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt::Debug;

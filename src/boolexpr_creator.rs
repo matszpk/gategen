@@ -1,5 +1,10 @@
 // boolexpr_creator.rs - boolean expression creator.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from boolean expressions.
+//!
+//! It defines the ExprCreator - main structure to create and hold boolean expressions.
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;

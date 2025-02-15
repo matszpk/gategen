@@ -1,5 +1,69 @@
 // mod.rs - integer expression structures.
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module to generate Gate circuits from integer expressions.
+//!
+//! This module contains traits and main structure to operate on integer expressions:
+//! `IntExprNode`. An IntExprNode just holds boolean expression for every bit of integer.
+//! You can use defined type of IntExprNode or just define your integer by supplying
+//! generic parameters.
+//!
+//! Three generic parameters determines type of IntExprNode.
+//! The first T parameter is just variable literal type - it can be omitted.
+//! The second parameter is typed integer (from typenum crate) that determine number of bits
+//! of integer. The last parameter is sign - true if signed integer or false if unsigned integer.
+//! Type of IntExprNode can be written in form: `IntExprNode<i32, U12, false>` -
+//! IntExprNode for 12-bit unsigned integer with 32-bit variable literals.
+//!
+//! ## Operations on expression nodes.
+//!
+//! An IntExprNode provides many operations:
+//!
+//! * equality - returns true if two expressions are equal.
+//! * inequalities - less, less or equal, greater, greater or equal.
+//! * absolute value - `abs()` only for signed IntExprNode.
+//! * bitwise arithmentic - bitwise AND, OR, XOR and NOT by using standard operators.
+//! * modular arithmetic - addition, subtraction, negation, multiplication.
+//! * conditional arithmentic - modular arithmentic that provides condition.
+//! * shifts - left and right shifts.
+//! * conditional shifts - left and right.
+//! * full multiplication - full multiplication that returns full product.
+//! * division and remainder (modulo) - returns quotient, remainder and required condition.
+//! * counting bits.
+//! * counting leading and trailing ones and zeroes.
+//!
+//! Many operations are defined through additional traits in this module.
+//! These traits and basic operations are implemented for expression nodes and integers -
+//! it possible to use integer as self or as an argument with expression node like:
+//! `332.mod_mul(x1)`. The method `constant` provide simple way to convert integer
+//! into an expression node (IntExprNode).
+//!
+//! ## Conditional operations.
+//!
+//! Conditional operations defined by `IntCondXXX` traits is specific type of operations that
+//! provide additional condition as an boolean expression. This condition is satisfiable when
+//! no overflow encountered while evaluating operation. It can supplied at root of final
+//! expression to force evaluate an operation without unexpected overflow like in this
+//! simple example that generates diophantic equation.
+//!
+//! The condition in conditional shifting
+//! just will be satisfied when shift (right argument) value is lower than number of
+//! bits of left argument.
+//!
+//! Division and remainder just returns additional condition that will be satisified if
+//! right argument is not zero.
+//!
+//! ## Conversion between types.
+//!
+//! It is possible conversion between various IntExprNodes that have various sizes and signs.
+//! Conversions are implemented by using standard `From` and `TryFrom` traits.
+//! Conversion from lesser IntExprNode into greater IntExprNode if source are unsigned.
+//!
+//! ## Other operations.
+//!
+//! IntExprNode provides other operations like concatenation of bits, splitting into two
+//! shorter IntExprNodes, casting to signed or unsigned and selection of bits of IntExprNodes.
+
 use std::cell::RefCell;
 use std::cmp;
 use std::collections::HashMap;
