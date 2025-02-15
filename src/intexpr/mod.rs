@@ -51,11 +51,11 @@
 //! fn main() {
 //!     let ec = ExprCreator32::new();
 //!     // create 8-bit unsigned inputs
-//!     let a = U8ExprNode::<i32>::variable(ec.clone());
-//!     let b = U8ExprNode::<i32>::variable(ec.clone());
-//!     let c = U8ExprNode::<i32>::variable(ec.clone());
-//!     let v1 = U8ExprNode::<i32>::constant(ec.clone(), 37u8);
-//!     let v2 = U8ExprNode::<i32>::constant(ec.clone(), 79u8);
+//!     let a = U8ExprNode::variable(ec.clone());
+//!     let b = U8ExprNode::variable(ec.clone());
+//!     let c = U8ExprNode::variable(ec.clone());
+//!     let v1 = U8ExprNode::constant(ec.clone(), 37u8);
+//!     let v2 = U8ExprNode::constant(ec.clone(), 79u8);
 //!     let out = a.clone().mod_mul(b.clone()).mod_mul(v1).mod_add(c.clone()).mod_add(v2);
 //!     // generate circuit
 //!     let circuit = out.to_translated_circuit(a.concat(b).concat(c).iter());
@@ -77,10 +77,10 @@
 //! fn main() {
 //!     let ec = ExprCreator32::new();
 //!     // create new 8-bit (unsigned) inputs of ALU
-//!     let a = U8ExprNode::<i32>::variable(ec.clone());
-//!     let b = U8ExprNode::<i32>::variable(ec.clone());
+//!     let a = U8ExprNode::variable(ec.clone());
+//!     let b = U8ExprNode::variable(ec.clone());
 //!     // create new 4-bit chooser variable
-//!     let c = UExprNode::<i32, U4>::variable(ec.clone());
+//!     let c = UExprNode::<_, U4>::variable(ec.clone());
 //!     // calculate operations:
 //!     // calculate A + B
 //!     let c0 = a.clone().mod_add(b.clone());

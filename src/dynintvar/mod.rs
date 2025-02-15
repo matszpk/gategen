@@ -29,35 +29,25 @@
 //! Sample example:
 //!
 //! ```
-//! use gate_calc_log_bits::*;
 //! use gategen::boolvar::*;
 //! use gategen::dynintvar::*;
 //! use gategen::*;
 //! use gatesim::*;
-//!
-//! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
-//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
+//! 
+//! // calculate n-bit value (A*B*37+C+79)
 //! fn main() {
-//!     let a: u128 = 458581; // some number.
-//!     // calculate bits for 'a' number.
-//!     let bits = calc_log_bits_u128(a);
-//!     // use half of bits to calculate bits of square root of number.
-//!     let half_bits = (bits + 1) >> 1;
-//!     // call a generating routine in callsys to.
-//!     let circuit = callsys(|| {
-//!         // x have half of bits of 'a' number.
-//!         let half_x = UDynVarSys::var(half_bits);
-//!         let a = UDynVarSys::from_n(a, bits);
-//!         let x = half_x
-//!             .clone()
-//!             .concat(UDynVarSys::from_n(0u8, bits - half_bits));
-//!         // calculate modulo: a modulo x.
-//!         let (res_mod, cond) = a % &x;
-//!         // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
-//!         let formula = res_mod.equal(0u8) & cond & x.nequal(1u8);
-//!         formula.to_translated_circuit(half_x.iter())
+//!     let n = 48;
+//!     let circuit = call32(|| {
+//!         // create 8-bit unsigned inputs
+//!         let a = UDynVar32::var(n);
+//!         let b = UDynVar32::var(n);
+//!         let c = UDynVar32::var(n);
+//!         let out = &a * &b * 37u8 + &c + 79u8;
+//!         // generate circuit
+//!         out.to_translated_circuit(a.concat(b).concat(c).iter())
 //!     });
-//!     print!("{}", FmtLiner::new(&circuit, 4, 8));
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
 //! }
 //! ```
 

@@ -31,36 +31,26 @@
 //! Sample example:
 //!
 //! ```
-//! use gate_calc_log_bits::*;
 //! use gategen::boolexpr::*;
 //! use gategen::dynintexpr::*;
 //! use gategen::*;
 //! use gatesim::*;
-//!
-//! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
-//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
+//! 
+//! // calculate n-bit value (A*B*37+C+79)
 //! fn main() {
-//!     let a: u128 = 557681; // some number.
-//!     // calculate bits for 'a' number.
-//!     let bits = calc_log_bits_u128(a);
-//!     // use half of bits to calculate bits of square root of number.
-//!     let half_bits = (bits + 1) >> 1;
-//!     let creator = ExprCreatorSys::new();
-//!     // x have half of bits of 'a' number.
-//!     let half_x = UDynExprNode::variable(creator.clone(), half_bits);
-//!     let a = UDynExprNode::try_constant_n(creator.clone(), bits, a).unwrap();
-//!     let x = half_x
-//!         .clone()
-//!         .concat(UDynExprNode::try_constant_n(creator.clone(), bits - half_bits, 0u8).unwrap());
-//!     // calculate modulo: a modulo x.
-//!     let (res_mod, cond) = a % x.clone();
-//!     // zero and one - constant values.
-//!     let zero = UDynExprNode::try_constant_n(creator.clone(), bits, 0u8).unwrap();
-//!     let one = UDynExprNode::try_constant_n(creator.clone(), bits, 1u8).unwrap();
-//!     // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
-//!     let formula: BoolExprNode<_> = res_mod.equal(zero) & cond & x.clone().nequal(one.clone());
-//!     let circuit = formula.to_translated_circuit(half_x.iter());
-//!     print!("{}", FmtLiner::new(&circuit, 4, 8));
+//!     let n = 48;
+//!     let ec = ExprCreator32::new();
+//!     // create 8-bit unsigned inputs
+//!     let a = UDynExprNode::variable(ec.clone(), n);
+//!     let b = UDynExprNode::variable(ec.clone(), n);
+//!     let c = UDynExprNode::variable(ec.clone(), n);
+//!     let v1 = UDynExprNode::try_constant_n(ec.clone(), n, 37u8).unwrap();
+//!     let v2 = UDynExprNode::try_constant_n(ec.clone(), n, 79u8).unwrap();
+//!     let out = a.clone().mod_mul(b.clone()).mod_mul(v1).mod_add(c.clone()).mod_add(v2);
+//!     // generate circuit
+//!     let circuit = out.to_translated_circuit(a.concat(b).concat(c).iter());
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
 //! }
 //! ```
 
