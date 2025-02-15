@@ -25,6 +25,41 @@
 //! what is length of integer, any conversion from integer with same signess will be done
 //! automatically. It just possible to write: `a + 12u8` and `a` can have any length.
 //! If conversion fails then program panicked.
+//!
+//! Sample example:
+//!
+//! ```
+//! use gate_calc_log_bits::*;
+//! use gategen::boolvar::*;
+//! use gategen::dynintvar::*;
+//! use gategen::*;
+//! use gatesim::*;
+//!
+//! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
+//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
+//! fn main() {
+//!     let a: u128 = 458581; // some number.
+//!     // calculate bits for 'a' number.
+//!     let bits = calc_log_bits_u128(a);
+//!     // use half of bits to calculate bits of square root of number.
+//!     let half_bits = (bits + 1) >> 1;
+//!     // call a generating routine in callsys to.
+//!     let circuit = callsys(|| {
+//!         // x have half of bits of 'a' number.
+//!         let half_x = UDynVarSys::var(half_bits);
+//!         let a = UDynVarSys::from_n(a, bits);
+//!         let x = half_x
+//!             .clone()
+//!             .concat(UDynVarSys::from_n(0u8, bits - half_bits));
+//!         // calculate modulo: a modulo x.
+//!         let (res_mod, cond) = a % &x;
+//!         // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
+//!         let formula = res_mod.equal(0u8) & cond & x.nequal(1u8);
+//!         formula.to_translated_circuit(half_x.iter())
+//!     });
+//!     print!("{}", FmtLiner::new(&circuit, 4, 8));
+//! }
+//! ```
 
 use std::cmp;
 use std::collections::HashMap;

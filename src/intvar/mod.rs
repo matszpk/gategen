@@ -28,6 +28,30 @@
 //! automatically. It just possible to write: `a + 12u8` and `a` can have any length.
 //! If conversion fails then program panicked.
 //!
+//! Sample example:
+//!
+//! ```
+//! use gategen::boolvar::*;
+//! use gategen::intvar::*;
+//! use gategen::*;
+//! use gatesim::*;
+//! 
+//! // calculate (A*B*37+C+79) as u8
+//! fn main() {
+//!     let circuit = call32(|| {
+//!         // create 8-bit unsigned inputs
+//!         let a = U8Var32::var();
+//!         let b = U8Var32::var();
+//!         let c = U8Var32::var();
+//!         let out = &a * &b * 37u8 + &c + 79u8;
+//!         // generate circuit
+//!         out.to_translated_circuit(a.concat(b).concat(c).iter())
+//!     });
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
+//! }
+//! ```
+//!
 //! Bit more complex example:
 //! ```
 //! use gategen::boolvar::*;
@@ -38,9 +62,10 @@
 //! // simple ALU circuit:
 //! fn main() {
 //!     let circuit = call32(|| {
-//!         // create new variables of ALU
+//!         // create new 8-bit (unsigned) inputs of ALU
 //!         let a = U8Var32::var();
 //!         let b = U8Var32::var();
+//!         // create new 4-bit chooser variable
 //!         let c = U4Var32::var();
 //!         let out = {
 //!             let a = &a;

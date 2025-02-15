@@ -27,6 +27,42 @@
 //! It is possible conversion between various DynIntExprNodes that have various sizes and signs.
 //! Conversions are implemented by using `TryFromNSized` traits which define
 //! a method 'try_from_n` where argument `n` defines bits of destination.
+//!
+//! Sample example:
+//!
+//! ```
+//! use gate_calc_log_bits::*;
+//! use gategen::boolexpr::*;
+//! use gategen::dynintexpr::*;
+//! use gategen::*;
+//! use gatesim::*;
+//!
+//! // program that generates circuit that check whether number 'a' (encoded in cirucit) is
+//! // divisible by input number ('half_x'). Circuit is unsatisifiable if 'a' is prime.
+//! fn main() {
+//!     let a: u128 = 557681; // some number.
+//!     // calculate bits for 'a' number.
+//!     let bits = calc_log_bits_u128(a);
+//!     // use half of bits to calculate bits of square root of number.
+//!     let half_bits = (bits + 1) >> 1;
+//!     let creator = ExprCreatorSys::new();
+//!     // x have half of bits of 'a' number.
+//!     let half_x = UDynExprNode::variable(creator.clone(), half_bits);
+//!     let a = UDynExprNode::try_constant_n(creator.clone(), bits, a).unwrap();
+//!     let x = half_x
+//!         .clone()
+//!         .concat(UDynExprNode::try_constant_n(creator.clone(), bits - half_bits, 0u8).unwrap());
+//!     // calculate modulo: a modulo x.
+//!     let (res_mod, cond) = a % x.clone();
+//!     // zero and one - constant values.
+//!     let zero = UDynExprNode::try_constant_n(creator.clone(), bits, 0u8).unwrap();
+//!     let one = UDynExprNode::try_constant_n(creator.clone(), bits, 1u8).unwrap();
+//!     // formula: modulo must be 0 and x must not be 0 (from cond) and must x != 1.
+//!     let formula: BoolExprNode<_> = res_mod.equal(zero) & cond & x.clone().nequal(one.clone());
+//!     let circuit = formula.to_translated_circuit(half_x.iter());
+//!     print!("{}", FmtLiner::new(&circuit, 4, 8));
+//! }
+//! ```
 
 use std::cell::RefCell;
 use std::collections::HashMap;

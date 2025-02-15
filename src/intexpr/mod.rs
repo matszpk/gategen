@@ -38,6 +38,32 @@
 //! `332.mod_mul(x1)`. The method `constant` provide simple way to convert integer
 //! into an expression node (IntExprNode).
 //!
+//! Sample example:
+//!
+//! ```
+//! use gategen::boolexpr::*;
+//! use gategen::generic_array::typenum::*;
+//! use gategen::intexpr::*;
+//! use gategen::*;
+//! use gatesim::*;
+//! 
+//! // calculate (A*B*37+C+79) as u8
+//! fn main() {
+//!     let ec = ExprCreator32::new();
+//!     // create 8-bit unsigned inputs
+//!     let a = U8ExprNode::<i32>::variable(ec.clone());
+//!     let b = U8ExprNode::<i32>::variable(ec.clone());
+//!     let c = U8ExprNode::<i32>::variable(ec.clone());
+//!     let v1 = U8ExprNode::<i32>::constant(ec.clone(), 37u8);
+//!     let v2 = U8ExprNode::<i32>::constant(ec.clone(), 79u8);
+//!     let out = a.clone().mod_mul(b.clone()).mod_mul(v1).mod_add(c.clone()).mod_add(v2);
+//!     // generate circuit
+//!     let circuit = out.to_translated_circuit(a.concat(b).concat(c).iter());
+//!     // print circuit
+//!     print!("{}", FmtLiner::new(&circuit, 0, 4));
+//! }
+//! ```
+//!
 //! Bit complex example:
 //!
 //! ```
@@ -50,9 +76,10 @@
 //! // simple ALU circuit:
 //! fn main() {
 //!     let ec = ExprCreator32::new();
-//!     // create new variables of ALU
+//!     // create new 8-bit (unsigned) inputs of ALU
 //!     let a = U8ExprNode::<i32>::variable(ec.clone());
 //!     let b = U8ExprNode::<i32>::variable(ec.clone());
+//!     // create new 4-bit chooser variable
 //!     let c = UExprNode::<i32, U4>::variable(ec.clone());
 //!     // calculate operations:
 //!     // calculate A + B
