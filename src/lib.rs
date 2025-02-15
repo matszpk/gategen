@@ -33,7 +33,7 @@
 //! operate on dynamic integer expressions. These types can be used as references and
 //! constants be converted into one of that type by using From trait.
 //!
-//! This version contains `min` and `max` helpers, new an optimized tables and If-Then-Else and
+//! This version contains `min` and `max` helpers, new optimized tables and If-Then-Else and
 //! and additional `subvalues` method to dynamic integers.
 //!
 //! Sample example in new interface:
