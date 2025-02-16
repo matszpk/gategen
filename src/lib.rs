@@ -7,14 +7,14 @@
 //! boolean expressions and integer expressions. The module `gate` provides
 //! basic types, traits to handle clauses and literals.
 //! The `boolexpr` module provides structure to construct boolean
-//! expressions. The `intexpr` and `dynintexpr` modules provides structure and traits to
+//! expressions. The `intexpr` and `dynintexpr` modules provide structure and traits to
 //! construct integer expressions.
 //!
 //! Same construction of expressions can be done in natural way by using operators or
 //! methods. The object called `ExprCreator` holds all expressions. The main structures
 //! that allow construct expressions are expression nodes: `BoolExprNode`, `IntExprNode`
 //! and `DynIntExprNode`. BoolExprNode allow to construct boolean expressions.
-//! `IntExprNode` and `DynIntExprNode` allow to construct integer expressions or multiple
+//! `IntExprNode` and `DynIntExprNode` allows to construct integer expressions or multiple
 //! bit expressions.
 //!
 //! Typical usage of this library is: construction boolean expression and write it by using

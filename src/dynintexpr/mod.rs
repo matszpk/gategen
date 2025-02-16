@@ -8,7 +8,7 @@
 //! Size of integer can be defined dynamically at runtime. This type can be used while
 //! writing generators which generates formula from source in higher-level language.
 //!
-//! Two generic parameters determines type of DynIntExprNode.
+//! Two generic parameters determine type of DynIntExprNode.
 //! The first T parameter is just variable literal type - it can be omitted.
 //! The second parameter is sign - true if signed integer or false if unsigned integer.
 //! Type of DynIntExprNode can be written in form: `DynIntExprNode<i32, false>` -

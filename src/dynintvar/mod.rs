@@ -10,7 +10,7 @@
 //! To write some formula `boolvar::call16`, `boolvar::call32` or `boolvar::callsys` should be
 //! used to call routine that generates formula by using this module.
 //!
-//! Two generic parameters determines type of DynIntVar.
+//! Two generic parameters determine type of DynIntVar.
 //! The first T parameter is just variable literal type - it can be omitted.
 //! The second parameter is sign - true if signed integer or false if unsigned integer.
 //! Type of DynIntExprNode can be written in form: `DynIntVar<i32, false>` -

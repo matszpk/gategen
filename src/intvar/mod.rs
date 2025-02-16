@@ -9,7 +9,7 @@
 //! To write some formula `boolvar::call16`, `boolvar::call32` or `boolvar::callsys` should be
 //! used to call routine that generates formula by using this module.
 //!
-//! Three generic parameters determines type of IntVar.
+//! Three generic parameters determine type of IntVar.
 //! The first T parameter is just variable literal type - it can be omitted.
 //! The second parameter is typed integer (from typenum crate) that determine number of bits
 //! of integer. The last parameter is sign - true if signed integer or false if unsigned integer.
