@@ -166,7 +166,7 @@ where
     /// Generates circuit for given variables.
     ///
     /// The `outputs` is list of output variable indices.
-    /// It returns circuit and mapping of that circuit's inputs (key is circuit's input index,
+    /// It returns circuit and mapping of that circuit inputs (key is circuit input index,
     /// value is variable literal from expression creator).
     pub fn to_circuit(
         &self,

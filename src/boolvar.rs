@@ -240,7 +240,7 @@ where
 
     /// Generates circuit for given self (as output) variable.
     ///
-    /// It returns circuit and mapping of that circuit's inputs (key is circuit's input index,
+    /// It returns circuit and mapping of that circuit inputs (key is circuit input index,
     /// value is variable literal from expression creator).
     pub fn to_circuit(
         &self,
@@ -311,7 +311,7 @@ where
     /// Creates expression from circuit and inputs.
     ///
     /// `circuit` is circuit to create as expression. `inputs` is input assignment to
-    /// circuit's inputs. It returns list of expressions that reflects circuit outputs.
+    /// circuit inputs. It returns list of expressions that reflects circuit outputs.
     pub fn from_circuit<ITP: Into<Self>>(
         circuit: Circuit<<T as VarLit>::Unsigned>,
         inputs: impl IntoIterator<Item = ITP>,
