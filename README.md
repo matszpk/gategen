@@ -37,7 +37,7 @@ and additional `subvalues` method to dynamic integers.
 
 Sample example in new interface:
 
-```
+```rust
 use gate_calc_log_bits::*;
 use gategen::boolvar::*;
 use gategen::dynintvar::*;
@@ -72,7 +72,7 @@ fn main() {
 
 Sample example in older interface:
 
-```
+```rust
 use gate_calc_log_bits::*;
 use gategen::boolexpr::*;
 use gategen::dynintexpr::*;

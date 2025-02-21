@@ -40,13 +40,13 @@
 //!
 //! Sample example:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolexpr::*;
 //! use gategen::generic_array::typenum::*;
 //! use gategen::intexpr::*;
 //! use gategen::*;
 //! use gatesim::*;
-//! 
+//!
 //! // calculate (A*B*37+C+79) as u8
 //! fn main() {
 //!     let ec = ExprCreator32::new();
@@ -66,13 +66,13 @@
 //!
 //! Bit complex example:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolexpr::*;
 //! use gategen::generic_array::typenum::*;
 //! use gategen::intexpr::*;
 //! use gategen::*;
 //! use gatesim::*;
-//! 
+//!
 //! // simple ALU circuit:
 //! fn main() {
 //!     let ec = ExprCreator32::new();

@@ -30,12 +30,12 @@
 //!
 //! Sample example:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolexpr::*;
 //! use gategen::dynintexpr::*;
 //! use gategen::*;
 //! use gatesim::*;
-//! 
+//!
 //! // calculate n-bit value (A*B*37+C+79)
 //! fn main() {
 //!     let n = 48;

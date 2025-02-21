@@ -9,7 +9,7 @@
 //!
 //! Simple example:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolvar::*;
 //! use gateutil::gatesim::*;
 //! fn simple_expr_generator() -> Circuit<u32> {
@@ -28,7 +28,7 @@
 //! }
 //! ```
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Neg, Not};
@@ -51,12 +51,27 @@ pub enum BoolVarError {
 }
 
 thread_local! {
+    pub(crate) static EC_HISTORY_ORDER: Cell<bool> = Cell::new(false);
     pub(crate) static EXPR_CREATOR_16: RefCell<Option<Rc<RefCell<ExprCreator<i16>>>>> =
         RefCell::new(None);
     pub(crate) static EXPR_CREATOR_32: RefCell<Option<Rc<RefCell<ExprCreator32>>>> =
         RefCell::new(None);
     pub(crate) static EXPR_CREATOR_SYS: RefCell<Option<Rc<RefCell<ExprCreatorSys>>>> =
         RefCell::new(None);
+}
+
+/// Returns true if history order enabled.
+///
+/// History_order options enables historical ordering while conversion to circuit.
+pub fn get_history_order() -> bool {
+    EC_HISTORY_ORDER.get()
+}
+
+/// Sets history order enabled.
+///
+/// History_order options enables historical ordering while conversion to circuit.
+pub fn set_history_order(history_order: bool) {
+    EC_HISTORY_ORDER.set(history_order);
 }
 
 /// Get current ExprCreator. Panic if it not set.
@@ -82,7 +97,11 @@ where
 {
     // install new ExprCreator
     EXPR_CREATOR_16.with_borrow(|ec| assert!(!ec.is_some()));
-    EXPR_CREATOR_16.set(Some(ExprCreator::<i16>::new()));
+    EXPR_CREATOR_16.set(Some(if EC_HISTORY_ORDER.get() {
+        ExprCreator::<i16>::with_history_order()
+    } else {
+        ExprCreator::<i16>::new()
+    }));
     let r = f();
     // drop
     let _ = EXPR_CREATOR_16.replace(None);
@@ -97,7 +116,11 @@ where
 {
     // install new ExprCreator
     EXPR_CREATOR_32.with_borrow(|ec| assert!(!ec.is_some()));
-    EXPR_CREATOR_32.set(Some(ExprCreator32::new()));
+    EXPR_CREATOR_32.set(Some(if EC_HISTORY_ORDER.get() {
+        ExprCreator32::with_history_order()
+    } else {
+        ExprCreator32::new()
+    }));
     let r = f();
     // drop
     let _ = EXPR_CREATOR_32.replace(None);
@@ -112,7 +135,11 @@ where
 {
     // install new ExprCreator
     EXPR_CREATOR_SYS.with_borrow(|ec| assert!(!ec.is_some()));
-    EXPR_CREATOR_SYS.set(Some(ExprCreatorSys::new()));
+    EXPR_CREATOR_SYS.set(Some(if EC_HISTORY_ORDER.get() {
+        ExprCreatorSys::with_history_order()
+    } else {
+        ExprCreatorSys::new()
+    }));
     let r = f();
     // drop
     let _ = EXPR_CREATOR_SYS.replace(None);

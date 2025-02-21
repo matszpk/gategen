@@ -38,7 +38,7 @@
 //!
 //! Sample example in new interface:
 //!
-//! ```
+//! ```rust
 //! use gate_calc_log_bits::*;
 //! use gategen::boolvar::*;
 //! use gategen::dynintvar::*;

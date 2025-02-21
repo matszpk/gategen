@@ -6,7 +6,7 @@
 //! This module contains traits and main structure to operate on boolean expressions:
 //! `BoolExprNode`.The same `BoolExprNode` can be used in following way:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolexpr::*;
 //! use gateutil::gatesim::*;
 //! fn simple_expr_generator() -> Circuit<u32> {
@@ -1121,6 +1121,7 @@ mod tests {
                     Node::Or(6, 9),
                 ],
                 lit_to_index: vec![2, 5, 3, 0, 4, 7],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1145,6 +1146,7 @@ mod tests {
                     Node::Or(12, 13),
                 ],
                 lit_to_index: vec![2, 5, 3, 0, 4, 7],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1183,6 +1185,7 @@ mod tests {
                     Node::Or(10, 12),
                 ],
                 lit_to_index: vec![2, 5, 3, 8, 4, 0, 11, 0, 6, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1216,6 +1219,7 @@ mod tests {
                     Node::Or(10, 12),
                 ],
                 lit_to_index: vec![2, 5, 3, 8, 4, 0, 11, 0, 6, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1242,6 +1246,7 @@ mod tests {
                     Node::Equal(7, 5),
                 ],
                 lit_to_index: vec![2, 4, 5, 0, 3, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1267,6 +1272,7 @@ mod tests {
                     Node::Equal(6, 4),
                 ],
                 lit_to_index: vec![2, 0, 3, 0, 4, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1292,6 +1298,7 @@ mod tests {
                     Node::Equal(6, 4),
                 ],
                 lit_to_index: vec![2, 0, 3, 0, 4, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1320,6 +1327,7 @@ mod tests {
                         Node::And(6, 4),
                     ],
                     lit_to_index: vec![2, 0, 3, 0],
+                    history_order: false,
                 },
                 *ec.borrow()
             );
@@ -1344,6 +1352,7 @@ mod tests {
                         Node::And(5, 2),
                     ],
                     lit_to_index: vec![2, 4, 3, 0],
+                    history_order: false,
                 },
                 *ec.borrow()
             );
@@ -1362,6 +1371,7 @@ mod tests {
                         Node::Single(Literal::Value(true)),
                     ],
                     lit_to_index: vec![],
+                    history_order: false,
                 },
                 *ec.borrow()
             );
@@ -1510,6 +1520,7 @@ mod tests {
                     Node::Xor(4, 5),
                 ],
                 lit_to_index: vec![2, 0, 3, 0, 4, 0, 5, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1542,6 +1553,7 @@ mod tests {
                     Node::Xor(4, 5),
                 ],
                 lit_to_index: vec![2, 0, 3, 0, 4, 0, 5, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1568,6 +1580,7 @@ mod tests {
                     Node::Or(5, 7)
                 ],
                 lit_to_index: vec![2, 6, 3, 0, 4, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1594,6 +1607,7 @@ mod tests {
                     Node::Or(5, 7)
                 ],
                 lit_to_index: vec![2, 6, 3, 0, 4, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1630,6 +1644,7 @@ mod tests {
                     Node::Xor(8, 2),
                 ],
                 lit_to_index: vec![2, 0, 3, 4, 7, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1654,6 +1669,7 @@ mod tests {
                     Node::And(2, 3),
                 ],
                 lit_to_index: vec![2, 0, 3, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1683,6 +1699,7 @@ mod tests {
                     Node::Or(7, 8),
                 ],
                 lit_to_index: vec![2, 0, 3, 0, 4, 0],
+                history_order: false,
             },
             *ec.borrow()
         );
@@ -1700,6 +1717,7 @@ mod tests {
                 Node::And(2, 3),
             ],
             lit_to_index: vec![2, 0, 3, 0],
+            history_order: false,
         };
         {
             let ec = ExprCreator::<isize>::new();
@@ -1740,6 +1758,7 @@ mod tests {
                 Node::Or(4, 6),
             ],
             lit_to_index: vec![2, 0, 3, 0],
+            history_order: false,
         };
         {
             let ec = ExprCreator::<isize>::new();

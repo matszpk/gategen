@@ -30,12 +30,12 @@
 //!
 //! Sample example:
 //!
-//! ```
+//! ```rust
 //! use gategen::boolvar::*;
 //! use gategen::intvar::*;
 //! use gategen::*;
 //! use gatesim::*;
-//! 
+//!
 //! // calculate (A*B*37+C+79) as u8
 //! fn main() {
 //!     let circuit = call32(|| {
@@ -53,12 +53,12 @@
 //! ```
 //!
 //! Bit more complex example:
-//! ```
+//! ```rust
 //! use gategen::boolvar::*;
 //! use gategen::intvar::*;
 //! use gategen::*;
 //! use gatesim::*;
-//! 
+//!
 //! // simple ALU circuit:
 //! fn main() {
 //!     let circuit = call32(|| {
