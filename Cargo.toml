@@ -11,8 +11,8 @@ keywords = ["gate", "logic", "circuit"]
 categories = ["science", "mathematics"]
 
 [dependencies]
-gateutil = { version="0.1.0", path="../gateutil" }
-gate_calc_log_bits = { path="../gate_calc_log_bits", version="0.1.0" }
+gateutil = "0.1.0"
+gate_calc_log_bits = "0.1.0"
 itoap = "1.0"
 thiserror = "1.0"
 generic-array = "0.14"
