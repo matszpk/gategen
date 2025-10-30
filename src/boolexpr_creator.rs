@@ -442,7 +442,6 @@ where
         usize: TryFrom<<T as VarLit>::Unsigned>,
         <usize as TryFrom<<T as VarLit>::Unsigned>>::Error: Debug,
     {
-        println!("ToCircuit history_order");
         type Unsigned<T> = <T as VarLit>::Unsigned;
         let mut input_map = HashMap::new();
         let outputs = Vec::from_iter(outputs);
