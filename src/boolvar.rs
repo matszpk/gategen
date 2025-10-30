@@ -60,16 +60,18 @@ thread_local! {
         RefCell::new(None);
 }
 
-/// Returns true if history order enabled.
+/// Returns true if history order enabled (thread local option).
 ///
 /// History_order options enables historical ordering while conversion to circuit.
+/// This option is thread local.
 pub fn get_history_order() -> bool {
     EC_HISTORY_ORDER.get()
 }
 
-/// Sets history order enabled.
+/// Sets history order (thread local option).
 ///
 /// History_order options enables historical ordering while conversion to circuit.
+/// This option is thread local.
 pub fn set_history_order(history_order: bool) {
     EC_HISTORY_ORDER.set(history_order);
 }
